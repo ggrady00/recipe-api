@@ -1,0 +1,8 @@
+exports.commentsData = require("./comments")
+exports.ingredientsData = require("./ingredients")
+exports.ratingsData = require("./ratings")
+exports.recipeIngredientsData = require("./recipe-ingredients")
+exports.recipeTagsData = require("./recipe-tags")
+exports.recipesData = require("./recipes")
+exports.tagsData = require("./tags")
+exports.usersData = require("./users")

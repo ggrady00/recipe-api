@@ -18,4 +18,3 @@ module.exports = [
     { name: 'Guacamole' }
 ];
 
-console.log(ingredients);
