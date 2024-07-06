@@ -1,5 +1,7 @@
 const db = require("../connection")
 const format = require('pg-format');
+const bcrypt = require("bcryptjs");
+const hashPasswords = require("./utils");
 
 const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, ratingsData, recipeTagsData, recipeIngredientsData}) => {
     return db.query('DROP TABLE IF EXISTS recipe_ingredients;')
@@ -34,9 +36,9 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         const usersTablePromise = db.query(`
         CREATE TABLE users (
             id SERIAL PRIMARY KEY,
-            username VARCHAR(50) NOT NULL,
-            email VARCHAR(30) NOT NULL,
-            password VARCHAR(20) NOT NULL,
+            username VARCHAR(50) UNIQUE NOT NULL,
+            email VARCHAR(30) UNIQUE NOT NULL,
+            password VARCHAR(100) NOT NULL,
             profile_info VARCHAR(100)
         );`)
         const recipesTablePromise =db.query(`
@@ -94,6 +96,9 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         );`)
     })
     .then(()=>{
+        return hashPasswords(usersData)
+    })
+    .then((usersData)=>{
         const insertTagsQueryStr = format(
             `INSERT INTO tags (name) VALUES %L;`,
             tagsData.map(({name}) => [name])
@@ -106,8 +111,6 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         )
         const usersPromise = db.query(insertUsersQueryStr)
 
-        console.log(ingredientsData)
-
         const insertIngredientsQueryStr = format(
             `INSERT INTO ingredients (name) VALUES %L;`,
             ingredientsData.map(({name}) => [name])
@@ -119,7 +122,9 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
             recipesData.map(({name, description, instructions}) => [name, description, instructions])
         )
         const recipesPromise = db.query(insertRecipesQueryStr)
-
+        return Promise.all([tagsPromise, usersPromise, recipesPromise, ingredientsPromise])
+    })
+    .then(()=>{
         const insertCommentsQueryStr = format(
             `INSERT INTO comments (recipe_id, user_id, body, created_at) VALUES %L;`,
             commentsData.map(({recipe_id, user_id, body, created_at}) => [recipe_id, user_id, body, created_at])
@@ -130,7 +135,6 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
             `INSERT INTO ratings (recipe_id, user_id, rating, created_at) VALUES %L;`,
             ratingsData.map(({recipe_id, user_id, rating, created_at}) => [recipe_id, user_id, rating, created_at])
         )
-        console.log(insertRatingsQueryStr)
         const ratingsPromise = db.query(insertRatingsQueryStr)
 
         const insertRecipeIngredientsQueryStr = format(
@@ -145,8 +149,7 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         )
         const recipeTagsPromise = db.query(insertRecipeTagsQueryStr)
 
-
-        return Promise.all([tagsPromise, usersPromise, recipesPromise, ingredientsPromise, commentsPromise, ratingsPromise, recipeIngredientsPromise, recipeTagsPromise])
+        return Promise.all([commentsPromise, ratingsPromise, recipeIngredientsPromise, recipeTagsPromise])
     })
 }
 
