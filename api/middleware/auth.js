@@ -7,6 +7,7 @@ exports.authenticateToken = (req, res, next) => {
 
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (decoded) {
+            req.user_id = decoded.id
             next()
         } else {
             if(err instanceof jwt.TokenExpiredError) {

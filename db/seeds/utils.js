@@ -24,4 +24,4 @@ function hashPasswords(usersData) {
 }
 
 
-module.exports = hashPasswords
+module.exports = hashPasswords, hashPassword

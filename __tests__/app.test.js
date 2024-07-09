@@ -2,7 +2,7 @@ const app = require("../api/app");
 const db = require("../db/connection");
 const seed = require("../db/seeds/seed");
 const request = require("supertest");
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
 const {
   tagsData,
   ingredientsData,
@@ -146,7 +146,7 @@ describe("authentication", () => {
         });
     });
   });
-  describe.only("Token Middleware", () => {
+  describe("Token Middleware", () => {
     const login = { username: "madhatter", password: "unsafepw" };
     let token;
     beforeAll(() => {
@@ -154,8 +154,8 @@ describe("authentication", () => {
         .post("/api/auth/login")
         .send(login)
         .then(({ body }) => {
-          token = body.token
-        })
+          token = body.token;
+        });
     });
     test("200: grant access to protected route with valid token", () => {
       return request(app)
@@ -163,16 +163,16 @@ describe("authentication", () => {
         .set("x-auth-token", token)
         .expect(200)
         .then(({ body: { profile } }) => {
-          expect(profile).toHaveProperty('username')
+          expect(profile).toHaveProperty("username");
         });
     });
     test("401: respond with correct error trying to access a protected route with invalid token", () => {
       return request(app)
         .get("/api/auth/profile")
-        .set("x-auth-token", 'invalidtoken')
+        .set("x-auth-token", "invalidtoken")
         .expect(401)
         .then(({ body }) => {
-          expect(body.msg).toBe('Invalid Token')
+          expect(body.msg).toBe("Invalid Token");
         });
     });
     test("401: respond with correct error trying to access a protected route with missing token", () => {
@@ -180,27 +180,97 @@ describe("authentication", () => {
         .get("/api/auth/profile")
         .expect(401)
         .then(({ body }) => {
-          expect(body.msg).toBe('Missing Token')
+          expect(body.msg).toBe("Missing Token");
         });
     });
     test("401: respond with correct error trying to access a protected route with expired token", async () => {
-      const expiredToken = jwt.sign({id: 1}, process.env.JWT_SECRET, {expiresIn: '1s'})
+      const expiredToken = jwt.sign({ id: 1 }, process.env.JWT_SECRET, {
+        expiresIn: "1s",
+      });
       return new Promise((resolve, reject) => {
-        setTimeout(()=>{
+        setTimeout(() => {
           return request(app)
-          .get("/api/auth/profile")
-          .set("x-auth-token", expiredToken)
-          .expect(401)
-          .then(({ body }) => {
-            expect(body.msg).toBe('Expired Token')
-            resolve()
-          })
-          .catch(err => {
-            reject(err)
-          })
-        }, 2000)
-      })
-      
+            .get("/api/auth/profile")
+            .set("x-auth-token", expiredToken)
+            .expect(401)
+            .then(({ body }) => {
+              expect(body.msg).toBe("Expired Token");
+              resolve();
+            })
+            .catch((err) => {
+              reject(err);
+            });
+        }, 2000);
+      });
     });
+  });
+  describe("GET/PATCH /profile", () => {
+    const login = { username: "new_user", password: "HeLoWrld123" };
+    let token;
+    beforeEach(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("200: responds with profile when given valid token", () => {
+      return request(app)
+        .get("/api/auth/profile")
+        .set("x-auth-token", token)
+        .expect(200)
+        .then(({ body: { profile } }) => {
+          expect(profile.username).toBe(login.username);
+          expect(profile.email).toBe("hello@world.com");
+          expect(profile.profile_info).toBe("Professional Chef");
+        });
+    });
+    test("200: responds with updated profile_info", () => {
+      return request(app)
+        .patch("/api/auth/profile")
+        .set("x-auth-token", token)
+        .send({ profile_info: "Retired Chef" })
+        .expect(200)
+        .then(({ body: { profile } }) => {
+          expect(profile.username).toBe(login.username);
+          expect(profile.email).toBe("hello@world.com");
+          expect(profile.profile_info).toBe("Retired Chef");
+        });
+    });
+    test("200: hashes and updates password and send response", () => {
+      return request(app)
+        .patch("/api/auth/profile")
+        .set("x-auth-token", token)
+        .send({ password: "newpassword" })
+        .expect(200)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Your Password has been Updated");
+        })
+        .then(()=>{
+          return request(app)
+          .post("/api/auth/login")
+          .send({ username: "new_user", password: "newpassword" })
+          .expect(200)
+        })
+        .then(({body})=>{
+          expect(body).toHaveProperty("token");
+          expect(body.user.username).toBe("new_user");
+          expect(body.user.id).toBe(3);
+        })
+        .then(()=>{
+          return request(app)
+          .post("/api/auth/login")
+          .send({ username: "new_user", password: "HeLoWrld123" })
+          .expect(400)
+        })
+        .then(({body}) => {
+          expect(body.msg).toBe("Invalid Password")
+        })
+    });
+    //test for ivalid token
+    //missing arguments
+    //invalid request
+    //cant patch both in same request
   });
 });
