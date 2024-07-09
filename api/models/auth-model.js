@@ -34,3 +34,11 @@ exports.logInUser = (username, password) => {
         return user
     })
 }
+
+exports.selectProfile = () => {
+  const queryStr =  `SELECT * FROM users WHERE id = 1;`
+  return db.query(queryStr)
+  .then(({rows}) => {
+    return rows[0]
+  })
+}

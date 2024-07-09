@@ -3,4 +3,5 @@ function isValidEmail(email) {
     return emailRegex.test(email)
 }
 
+
 module.exports = isValidEmail

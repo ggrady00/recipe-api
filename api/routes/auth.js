@@ -1,4 +1,5 @@
-const { postNewUser, postLoginIn } = require("../controllers/auth-controller")
+const { postNewUser, postLoginIn, getProfile } = require("../controllers/auth-controller")
+const { authenticateToken } = require("../middleware/auth")
 
 
 
@@ -11,5 +12,9 @@ authRouter
 authRouter
 .route("/login")
 .post(postLoginIn)
+
+authRouter
+.route("/profile")
+.get(authenticateToken, getProfile)
 
 module.exports = authRouter
