@@ -15,6 +15,10 @@ module.exports = [
     { name: 'Taco Shells' },
     { name: 'Cheese' },
     { name: 'Tofu' },
-    { name: 'Guacamole' }
+    { name: 'Guacamole' },
+    { name: 'Pasta'},
+    { name: 'Basil'},
+    { name: 'Pine Nuts'},
+    { name: 'Olive Oil'}
 ];
 

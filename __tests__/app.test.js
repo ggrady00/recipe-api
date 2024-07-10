@@ -247,26 +247,26 @@ describe("authentication", () => {
         .then(({ body }) => {
           expect(body.msg).toBe("Your Password has been Updated");
         })
-        .then(()=>{
+        .then(() => {
           return request(app)
-          .post("/api/auth/login")
-          .send({ username: "new_user", password: "newpassword" })
-          .expect(200)
+            .post("/api/auth/login")
+            .send({ username: "new_user", password: "newpassword" })
+            .expect(200);
         })
-        .then(({body})=>{
+        .then(({ body }) => {
           expect(body).toHaveProperty("token");
           expect(body.user.username).toBe("new_user");
           expect(body.user.id).toBe(3);
         })
-        .then(()=>{
+        .then(() => {
           return request(app)
-          .post("/api/auth/login")
-          .send({ username: "new_user", password: "HeLoWrld123" })
-          .expect(400)
+            .post("/api/auth/login")
+            .send({ username: "new_user", password: "HeLoWrld123" })
+            .expect(400);
         })
-        .then(({body}) => {
-          expect(body.msg).toBe("Invalid Password")
-        })
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Password");
+        });
     });
     test("401: respond with correct error trying to access a endpoint with invalid token", () => {
       return request(app)
@@ -278,74 +278,184 @@ describe("authentication", () => {
           expect(body.msg).toBe("Invalid Token");
         });
     });
-    test("400: responds with correct error when send a patch request with no body" ,() => {
+    test("400: responds with correct error when send a patch request with no body", () => {
       return request(app)
-      .patch("/api/auth/profile")
-      .set("x-auth-token", token)
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
-    test("400: responds with correct error when send an invalid patch request" ,() => {
+        .patch("/api/auth/profile")
+        .set("x-auth-token", token)
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("400: responds with correct error when send an invalid patch request", () => {
       return request(app)
-      .patch("/api/auth/profile")
-      .set("x-auth-token", token)
-      .send({ email: "newemail@test.com" })
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
-    test("400: responds with correct error when send a patch request trying to patch password and info at same time" ,() => {
+        .patch("/api/auth/profile")
+        .set("x-auth-token", token)
+        .send({ email: "newemail@test.com" })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("400: responds with correct error when send a patch request trying to patch password and info at same time", () => {
       return request(app)
-      .patch("/api/auth/profile")
-      .set("x-auth-token", token)
-      .send({ password: "newpw", profile_info: "Retired Chef" })
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
+        .patch("/api/auth/profile")
+        .set("x-auth-token", token)
+        .send({ password: "newpw", profile_info: "Retired Chef" })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
   });
 });
 
-describe("endpoints", ()=>{
-  describe.only("GET /recipes", () => {
-    test("200: returns an array of all recipes", ()=>{
+describe("endpoints", () => {
+  describe("GET /recipes", () => {
+    test("200: returns an array of all recipes", () => {
       return request(app)
-      .get("/api/recipes")
-      .expect(200)
-      .then(({body: {recipes}}) => {
-        expect(recipes.length).toBe(4)
+        .get("/api/recipes")
+        .expect(200)
+        .then(({ body: { recipes } }) => {
+          expect(recipes.length).toBe(4);
+        });
+    });
+    test("200: returns recipes with correct properties", () => {
+      return request(app)
+        .get("/api/recipes")
+        .expect(200)
+        .then(({ body: { recipes } }) => {
+          recipes.forEach((recipe) => {
+            expect(recipe).toHaveProperty("id");
+            expect(recipe).toHaveProperty("name");
+            expect(recipe).toHaveProperty("description");
+            expect(recipe).toHaveProperty("instructions");
+            expect(recipe).toHaveProperty("created_at");
+            expect(recipe).toHaveProperty("updated_at");
+            expect(recipe).toHaveProperty("ingredients");
+            expect(Array.isArray(recipe.ingredients)).toBe(true);
+          });
+        });
+    });
+    test("200: returns an correct array of ingredients for each recipe", () => {
+      return request(app)
+        .get("/api/recipes")
+        .expect(200)
+        .then(({ body: { recipes } }) => {
+          expect(recipes[0].ingredients.length).toBe(4);
+          expect(recipes[0].ingredients).toEqual([
+            { ingredient: "Spaghetti", quantity: "200g" },
+            { ingredient: "Pancetta", quantity: "100g" },
+            { ingredient: "Eggs", quantity: "2 large" },
+            { ingredient: "Parmesan Cheese", quantity: "50g" },
+          ]);
+        });
+    });
+  });
+  describe.only("GET /recipes/:id", ()=> {
+    test("200: returns a recipe by id" ,() => {
+      return request(app)
+        .get("/api/recipes/2")
+        .expect(200)
+        .then(({ body: { recipe } }) => {
+            expect(recipe).toHaveProperty("id");
+            expect(recipe).toHaveProperty("name");
+            expect(recipe).toHaveProperty("description");
+            expect(recipe).toHaveProperty("instructions");
+            expect(recipe).toHaveProperty("created_at");
+            expect(recipe).toHaveProperty("updated_at");
+            expect(recipe).toHaveProperty("ingredients");
+            expect(Array.isArray(recipe.ingredients)).toBe(true);
+        });
+    })
+    test("200: returns an correct array of ingredients for recipe", () => {
+      return request(app)
+        .get("/api/recipes/2")
+        .expect(200)
+        .then(({ body: { recipe } }) => {
+          expect(recipe.ingredients.length).toBe(6);
+          expect(recipe.ingredients).toEqual([
+            { ingredient: "Chicken", quantity: "300g" },
+            { ingredient: "Curry Powder", quantity: "2 tbsp" },
+            { ingredient: "Onion", quantity: "1 medium" },
+            { ingredient: "Garlic", quantity: "3 cloves" },
+            { ingredient: "Tomatoes", quantity: "2 large" },
+            { ingredient: "Coconut Milk", quantity: "400ml" }
+          ]);
+        });
+    })
+    test("404: returns error when given a non existant recipe id", ()=> {
+      return request(app)
+      .get("/api/recipes/999")
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Recipe not Found")
       })
     })
-    test("200: returns recipes with correct properties", ()=>{
+    test("400: returns error when given a invalid recipe id", ()=> {
       return request(app)
-      .get("/api/recipes")
-      .expect(200)
-      .then(({body: {recipes}}) => {
-        recipes.forEach(recipe => {
-          expect(recipe).toHaveProperty("id")
-          expect(recipe).toHaveProperty("name")
-          expect(recipe).toHaveProperty("description")
-          expect(recipe).toHaveProperty("instructions")
-          expect(recipe).toHaveProperty("created_at")
-          expect(recipe).toHaveProperty("updated_at")
-          expect(recipe).toHaveProperty("ingredients")
-          expect(Array.isArray(recipe.ingredients)).toBe(true)
-        })
-
-      })
-    })
-    test("200: returns an correct array of ingredients for each recipe", ()=>{
-      return request(app)
-      .get("/api/recipes")
-      .expect(200)
-      .then(({body: {recipes}}) => {
-        expect(recipes[0].ingredients.length).toBe(4)
-        expect(recipes[0].ingredients).toEqual([{ingredient: "Spaghetti", quantity: "200g"}, {ingredient: "Pancetta", quantity: "100g"}, {ingredient: "Eggs", quantity: "2 large"}, {ingredient: "Parmesan Cheese", quantity: "50g"}])
+      .get("/api/recipes/banana")
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
       })
     })
   })
-})
+  // describe.only("POST /recipes", () => {
+  //   test("201: posts and responds with new recipe", () => {
+  //     const requestBody = {
+  //       name: "Pesto Pasta",
+  //       description: "Fresh and aromatic pasta with basil pesto",
+  //       instructions:
+  //         "1. Cook pasta. 2. Blend basil, garlic, pine nuts, and Parmesan cheese into pesto. 3. Mix with pasta and serve.",
+  //       ingredients: [
+  //         {
+  //           id: 18,
+  //           quantity: "200g",
+  //         },
+  //         {
+  //           id: 19,
+  //           quantity: "2 cups",
+  //         },
+  //         {
+  //           id: 8,
+  //           quantity: "2 cloves",
+  //         },
+  //         {
+  //           id: 20,
+  //           quantity: "1/4 cup",
+  //         },
+  //         {
+  //           id: 4,
+  //           quantity: "1/2 cup",
+  //         },
+  //         {
+  //           id: 21,
+  //           quantity: "1/4 cup",
+  //         },
+  //       ],
+  //     };
+
+  //     return request(app)
+  //     .post("/api/recipes")
+  //     .send(requestBody)
+  //     .expect(201)
+  //     .then(({body: {recipe}}) => {
+  //       expect(recipe).toHaveProperty("id");
+  //           expect(recipe.name).toBe(requestBody.name)
+  //           expect(recipe.description).toBe(requestBody.description)
+  //           expect(recipe.instructions).toBe(requestBody.instructions)
+  //           expect(recipe).toHaveProperty("created_at");
+  //           expect(recipe).toHaveProperty("updated_at");
+  //           expect(recipe.ingredients).toEqual([
+  //             { ingredient: "Pasta", quantity: "200g" },
+  //             { ingredient: "Basil", quantity: "2 cups" },
+  //             { ingredient: "Garlic", quantity: "2 cloves" },
+  //             { ingredient: "Pine Nuts", quantity: "1/4 cup" },
+  //             { ingredient: "Parmesan Cheese", quantity: "1/2 cup" },
+  //             { ingredient: "Olive Oil", quantity: "1/4 cup" }
+  //           ])
+  //     })
+  //   });
+  // });
+});

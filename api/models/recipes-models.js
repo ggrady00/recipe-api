@@ -25,3 +25,22 @@ exports.selectIngredientsByID = (id) => {
         return rows
     })
 }
+
+exports.selectRecipeByID = (id) => {
+    const queryStr = `SELECT * FROM recipes WHERE id = $1`
+    return db.query(queryStr, [id])
+    .then(({rows}) => {
+        if(!rows.length) return Promise.reject({status: 404, msg: "Recipe not Found"})
+        recipe = rows[0]
+        return this.selectIngredientsByID(recipe.id)
+    })
+    .then(ingredients => {
+        recipe.ingredients = ingredients
+        return recipe
+    })
+}
+
+// exports.insertRecipe = (body) => {
+//     const ingredients = body.ingredients
+//     const queryStr = `INSERT INTO recipes (name, description, ingredients)`
+// }
