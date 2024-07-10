@@ -83,7 +83,8 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         CREATE TABLE recipe_ingredients (
             id SERIAL PRIMARY KEY,
             recipe_id INT REFERENCES recipes(id),
-            ingredient_id INT REFERENCES ingredients(id)
+            ingredient_id INT REFERENCES ingredients(id),
+            quantity VARCHAR(50)
         );`)
     })
     
@@ -138,9 +139,10 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         const ratingsPromise = db.query(insertRatingsQueryStr)
 
         const insertRecipeIngredientsQueryStr = format(
-            `INSERT INTO recipe_ingredients (recipe_id, ingredient_id) VALUES %L;`,
-            recipeIngredientsData.map(({recipe_id, ingredient_id}) => [recipe_id, ingredient_id])
+            `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES %L;`,
+            recipeIngredientsData.map(({recipe_id, ingredient_id, quantity}) => [recipe_id, ingredient_id, quantity])
         )
+        // console.log(insertRecipeIngredientsQueryStr)
         const recipeIngredientsPromise = db.query(insertRecipeIngredientsQueryStr)
 
         const insertRecipeTagsQueryStr = format(

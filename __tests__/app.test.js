@@ -344,7 +344,7 @@ describe("endpoints", ()=>{
       .expect(200)
       .then(({body: {recipes}}) => {
         expect(recipes[0].ingredients.length).toBe(4)
-        expect(recipes[0].ingredients).toEqual(['Spaghetti', 'Pancetta', 'Eggs', 'Parmesan Cheese'])
+        expect(recipes[0].ingredients).toEqual([{ingredient: "Spaghetti", quantity: "200g"}, {ingredient: "Pancetta", quantity: "100g"}, {ingredient: "Eggs", quantity: "2 large"}, {ingredient: "Parmesan Cheese", quantity: "50g"}])
       })
     })
   })
