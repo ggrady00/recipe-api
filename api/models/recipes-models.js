@@ -8,6 +8,10 @@ exports.selectAllRecipes = () => {
             return this.selectIngredientsByID(recipe.id)
             .then((ingredients)=>{
                 recipe.ingredients = ingredients
+                return this.selectTagsByID(recipe.id)
+            })
+            .then((tags) => {
+                recipe.tags = tags
                 return recipe
             })
         })
@@ -26,6 +30,17 @@ exports.selectIngredientsByID = (id) => {
     })
 }
 
+exports.selectTagsByID = (id) => {
+    const queryStr = `SELECT t.name FROM recipe_tags rt
+                      LEFT JOIN tags t
+                      ON rt.tag_id = t.id
+                      WHERE rt.recipe_id = $1;`
+    return db.query(queryStr, [id])
+    .then(({rows}) => {
+        return rows.map(row => row.name)
+    })
+}
+
 exports.selectRecipeByID = (id) => {
     const queryStr = `SELECT * FROM recipes WHERE id = $1`
     return db.query(queryStr, [id])
@@ -36,6 +51,10 @@ exports.selectRecipeByID = (id) => {
     })
     .then(ingredients => {
         recipe.ingredients = ingredients
+        return this.selectTagsByID(recipe.id)
+    })
+    .then((tags) => {
+        recipe.tags = tags
         return recipe
     })
 }

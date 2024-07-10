@@ -311,6 +311,7 @@ describe("authentication", () => {
 });
 
 describe("endpoints", () => {
+  
   describe("GET /recipes", () => {
     test("200: returns an array of all recipes", () => {
       return request(app)
@@ -334,6 +335,8 @@ describe("endpoints", () => {
             expect(recipe).toHaveProperty("updated_at");
             expect(recipe).toHaveProperty("ingredients");
             expect(Array.isArray(recipe.ingredients)).toBe(true);
+            expect(recipe).toHaveProperty("tags");
+            expect(Array.isArray(recipe.tags)).toBe(true);
           });
         });
     });
@@ -351,8 +354,18 @@ describe("endpoints", () => {
           ]);
         });
     });
+    test("200: returns an correct array of tags for each recipe", () => {
+      return request(app)
+        .get("/api/recipes")
+        .expect(200)
+        .then(({ body: { recipes } }) => {
+          console.log(recipes)
+          expect(recipes[3].tags.length).toBe(4);
+          expect(recipes[3].tags).toEqual(["Mexican", "Tacos", "Quick", "Healthy"]);
+        });
+    });
   });
-  describe.only("GET /recipes/:id", ()=> {
+  describe("GET /recipes/:id", ()=> {
     test("200: returns a recipe by id" ,() => {
       return request(app)
         .get("/api/recipes/2")
@@ -382,6 +395,16 @@ describe("endpoints", () => {
             { ingredient: "Tomatoes", quantity: "2 large" },
             { ingredient: "Coconut Milk", quantity: "400ml" }
           ]);
+        });
+    })
+    test("200: returns an correct array of tags for recipe", () => {
+      return request(app)
+        .get("/api/recipes/2")
+        .expect(200)
+        .then(({ body: { recipe } }) => {
+          console.log(recipe)
+          expect(recipe.tags.length).toBe(2);
+          expect(recipe.tags).toEqual(["Curry", "Chicken"]);
         });
     })
     test("404: returns error when given a non existant recipe id", ()=> {
