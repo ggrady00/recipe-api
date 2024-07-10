@@ -47,7 +47,7 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
             name VARCHAR(50) NOT NULL,
             description VARCHAR(100),
             instructions VARCHAR,
-            create_at TIMESTAMP DEFAULT NOW(),
+            created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP
         );`)
 

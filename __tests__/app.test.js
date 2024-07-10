@@ -204,7 +204,7 @@ describe("authentication", () => {
       });
     });
   });
-  describe.only("GET/PATCH /profile", () => {
+  describe("GET/PATCH /profile", () => {
     const login = { username: "new_user", password: "HeLoWrld123" };
     let token;
     beforeEach(() => {
@@ -309,3 +309,43 @@ describe("authentication", () => {
     })
   });
 });
+
+describe("endpoints", ()=>{
+  describe.only("GET /recipes", () => {
+    test("200: returns an array of all recipes", ()=>{
+      return request(app)
+      .get("/api/recipes")
+      .expect(200)
+      .then(({body: {recipes}}) => {
+        expect(recipes.length).toBe(4)
+      })
+    })
+    test("200: returns recipes with correct properties", ()=>{
+      return request(app)
+      .get("/api/recipes")
+      .expect(200)
+      .then(({body: {recipes}}) => {
+        recipes.forEach(recipe => {
+          expect(recipe).toHaveProperty("id")
+          expect(recipe).toHaveProperty("name")
+          expect(recipe).toHaveProperty("description")
+          expect(recipe).toHaveProperty("instructions")
+          expect(recipe).toHaveProperty("created_at")
+          expect(recipe).toHaveProperty("updated_at")
+          expect(recipe).toHaveProperty("ingredients")
+          expect(Array.isArray(recipe.ingredients)).toBe(true)
+        })
+
+      })
+    })
+    test("200: returns an correct array of ingredients for each recipe", ()=>{
+      return request(app)
+      .get("/api/recipes")
+      .expect(200)
+      .then(({body: {recipes}}) => {
+        expect(recipes[0].ingredients.length).toBe(4)
+        expect(recipes[0].ingredients).toEqual(['Spaghetti', 'Pancetta', 'Eggs', 'Parmesan Cheese'])
+      })
+    })
+  })
+})
