@@ -204,7 +204,7 @@ describe("authentication", () => {
       });
     });
   });
-  describe("GET/PATCH /profile", () => {
+  describe.only("GET/PATCH /profile", () => {
     const login = { username: "new_user", password: "HeLoWrld123" };
     let token;
     beforeEach(() => {
@@ -268,9 +268,44 @@ describe("authentication", () => {
           expect(body.msg).toBe("Invalid Password")
         })
     });
-    //test for ivalid token
-    //missing arguments
-    //invalid request
-    //cant patch both in same request
+    test("401: respond with correct error trying to access a endpoint with invalid token", () => {
+      return request(app)
+        .patch("/api/auth/profile")
+        .set("x-auth-token", "invalidtoken")
+        .send({ password: "newpassword" })
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
+    test("400: responds with correct error when send a patch request with no body" ,() => {
+      return request(app)
+      .patch("/api/auth/profile")
+      .set("x-auth-token", token)
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("400: responds with correct error when send an invalid patch request" ,() => {
+      return request(app)
+      .patch("/api/auth/profile")
+      .set("x-auth-token", token)
+      .send({ email: "newemail@test.com" })
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("400: responds with correct error when send a patch request trying to patch password and info at same time" ,() => {
+      return request(app)
+      .patch("/api/auth/profile")
+      .set("x-auth-token", token)
+      .send({ password: "newpw", profile_info: "Retired Chef" })
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
   });
 });
