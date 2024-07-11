@@ -9,7 +9,7 @@ exports.selectAllTags = () => {
 }
 
 exports.insertTag = (tag) => {
-    if(typeof tag !== 'string') return Promise.reject({status:400, msg: 'Bad Request'})
+    if(typeof tag !== 'string' || !tag.length) return Promise.reject({status:400, msg: 'Bad Request'})
     const queryStr = `INSERT into tags (name)
                       VALUES ($1)
                       RETURNING *`

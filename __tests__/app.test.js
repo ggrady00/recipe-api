@@ -478,6 +478,15 @@ describe("endpoints", () => {
         expect(body.msg).toBe('Bad Request')
       })
     })
+    test('400: returns error when request body is an empty string', ()=> {
+      return request(app)
+      .post('/api/ingredients')
+      .send({name: ''})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe('Bad Request')
+      })
+    })
   })
   describe("GET /tags", ()=> {
     test("200: returns an array of all tags", ()=> {
@@ -531,6 +540,15 @@ describe("endpoints", () => {
       .expect(400)
       .then(({body}) => {
         expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test('400: returns error when request body is an empty string', ()=> {
+      return request(app)
+      .post('/api/tags')
+      .send({name: ''})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe('Bad Request')
       })
     })
   })
