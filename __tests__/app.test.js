@@ -424,6 +424,41 @@ describe("endpoints", () => {
       })
     })
   })
+  describe("GET /ingredients", ()=> {
+    test("200: responds with array of ingredients", ()=> {
+      return request(app)
+      .get("/api/ingredients")
+      .expect(200)
+      .then(({body: {ingredients}}) => {
+        console.log(ingredients)
+        expect(ingredients.length).toBe(21)
+        ingredients.forEach(ingredient => {
+          expect(ingredient).toHaveProperty('id')
+          expect(ingredient).toHaveProperty('name')
+        })
+        expect(ingredients[0]).toEqual({id: 1, name: 'Spaghetti'})
+        expect(ingredients[20]).toEqual({id: 21, name: 'Olive Oil'})
+      })
+    })
+  })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // describe.only("POST /recipes", () => {
   //   test("201: posts and responds with new recipe", () => {
   //     const requestBody = {

@@ -16,3 +16,7 @@ exports.handlePsqlErrors = (err, req, res, next) => {
         next(err)
     }
 }
+
+exports.handle404Errors = (req, res) => {
+    res.status(404).send({msg: 'Not Found'})
+}

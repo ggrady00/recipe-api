@@ -1,5 +1,5 @@
 const express = require("express")
-const {handleCustomErrors, handlePsqlErrors} = require("./errors")
+const {handleCustomErrors, handlePsqlErrors, handle404Errors} = require("./errors")
 
 const apiRouter = require("../api/routes/api-router")
 
@@ -10,6 +10,7 @@ app.get("/", ((req, res) => {return res.status(200).send("Recipe API")}))
 
 app.use("/api", apiRouter)
 
+app.all("*", handle404Errors)
 app.use(handleCustomErrors)
 app.use(handlePsqlErrors)
 
