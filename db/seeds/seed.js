@@ -30,7 +30,7 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         const tagsTablePromise = db.query(`
         CREATE TABLE tags (
             id SERIAL PRIMARY KEY,
-            name VARCHAR(50) NOT NULL
+            name VARCHAR(50) UNIQUE NOT NULL
         );`)
 
         const usersTablePromise = db.query(`

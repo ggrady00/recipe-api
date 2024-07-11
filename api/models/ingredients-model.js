@@ -9,6 +9,7 @@ exports.selectAllIngredients = () => {
 }
 
 exports.insertIngredient = (ingredient) => {
+    if(typeof ingredient !== 'string') return Promise.reject({status:400, msg: 'Bad Request'})
     const queryStr = `INSERT into ingredients (name)
                       VALUES ($1) 
                       RETURNING *`

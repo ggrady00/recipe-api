@@ -7,3 +7,14 @@ exports.selectAllTags = () => {
         return rows
     })
 }
+
+exports.insertTag = (tag) => {
+    if(typeof tag !== 'string') return Promise.reject({status:400, msg: 'Bad Request'})
+    const queryStr = `INSERT into tags (name)
+                      VALUES ($1)
+                      RETURNING *`
+    return db.query(queryStr, [tag])
+    .then(({rows}) => {
+        return rows[0]
+    })
+}

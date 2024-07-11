@@ -469,8 +469,17 @@ describe("endpoints", () => {
         expect(body.msg).toBe('Already Exists')
       })
     })
+    test('400: returns error when invalid request body', ()=> {
+      return request(app)
+      .post('/api/ingredients')
+      .send({name: ['Spaghetti']})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe('Bad Request')
+      })
+    })
   })
-  describe.only("GET /tags", ()=> {
+  describe("GET /tags", ()=> {
     test("200: returns an array of all tags", ()=> {
       return request(app)
       .get("/api/tags")
@@ -485,6 +494,44 @@ describe("endpoints", () => {
         expect(tags[3]).toEqual({id: 4, name :'Curry'})
         expect(tags[8]).toEqual({id: 9, name:'Quick'})
       } )
+    })
+  })
+  describe("POST /tags", ()=> {
+    test("201: returns new tag and adds to db", ()=> {
+      return request(app)
+      .post("/api/tags")
+      .send({name: 'Chinese'})
+      .expect(201)
+      .then(({body: {tag}}) => {
+        expect(tag).toEqual({id: 11, name: 'Chinese'})
+      })
+    })
+    test("400: returns error when request body is missing elements", ()=> {
+      return request(app)
+      .post("/api/tags")
+      .send({})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("409: returns error when tag already exists", ()=> {
+      return request(app)
+      .post("/api/tags")
+      .send({name: 'Curry'})
+      .expect(409)
+      .then(({body}) => {
+        expect(body.msg).toBe("Already Exists")
+      })
+    })
+    test("400: returns error when request body is invalid", ()=> {
+      return request(app)
+      .post("/api/tags")
+      .send({name: {name: 'Chinese'}})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
     })
   })
 
