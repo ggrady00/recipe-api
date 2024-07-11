@@ -54,7 +54,7 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         const ingredientsTablePromise = db.query(`
         CREATE TABLE ingredients (
             id SERIAL PRIMARY KEY,
-            name VARCHAR(50) NOT NULL
+            name VARCHAR(50) UNIQUE NOT NULL
         );`)
         return Promise.all([tagsTablePromise, usersTablePromise, recipesTablePromise, ingredientsTablePromise])
     })

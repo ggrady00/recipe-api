@@ -7,3 +7,13 @@ exports.selectAllIngredients = () => {
         return rows
     })
 }
+
+exports.insertIngredient = (ingredient) => {
+    const queryStr = `INSERT into ingredients (name)
+                      VALUES ($1) 
+                      RETURNING *`
+    return db.query(queryStr, [ingredient])
+    .then(({rows}) => {
+        return rows[0]
+    })
+}

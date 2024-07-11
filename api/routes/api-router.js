@@ -1,7 +1,7 @@
 const apiRouter = require("express").Router()
-const authRouter = require("./auth")
-const ingredientRouter = require("./ingredients")
-const recipeRouter = require("./recipes")
+const authRouter = require("./auth-router")
+const ingredientRouter = require("./ingredients-router")
+const recipeRouter = require("./recipes-router")
 
 apiRouter.use("/auth", authRouter)
 apiRouter.use("/recipes", recipeRouter)

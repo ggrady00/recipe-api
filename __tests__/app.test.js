@@ -441,6 +441,52 @@ describe("endpoints", () => {
       })
     })
   })
+  describe("POST /ingredients", ()=> {
+    test('201: returns new ingredient and adds to db', ()=> {
+      return request(app)
+      .post('/api/ingredients')
+      .send({name: 'Butter'})
+      .expect(201)
+      .then(({body: {ingredient}}) => {
+        expect(ingredient).toEqual({id: 22, name: 'Butter'})
+      })
+    })
+    test('400: returns error when body missing elements', ()=> {
+      return request(app)
+      .post('/api/ingredients')
+      .send({})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe('Bad Request')
+      })
+    })
+    test('409: returns error when posting an ingredient already in database', ()=> {
+      return request(app)
+      .post('/api/ingredients')
+      .send({name: 'Spaghetti'})
+      .expect(409)
+      .then(({body}) => {
+        expect(body.msg).toBe('Already Exists')
+      })
+    })
+  })
+  describe.only("GET /tags", ()=> {
+    test("200: returns an array of all tags", ()=> {
+      return request(app)
+      .get("/api/tags")
+      .expect(200)
+      .then(({body: {tags}}) => {
+        expect(tags.length).toBe(10)
+        tags.forEach(tag => {
+          expect(tag).toHaveProperty('id')
+          expect(tag).toHaveProperty('name')
+        })
+        expect(tags[0]).toBe({id: 1, name: 'Italian'})
+        expect(tags[3]).toBe({id: 4, name :'Curry'})
+        expect(tags[8]).toBe({id: 9, name:'Quick'})
+      } )
+    })
+  })
 
 
 
