@@ -1,4 +1,4 @@
-const { selectAllRecipes, insertRecipe, selectRecipeByID } = require("../models/recipes-models")
+const { selectAllRecipes, insertRecipe, selectRecipeByID, updateRecipeByID } = require("../models/recipes-models")
 
 exports.getRecipes = (req, res, next) => {
     selectAllRecipes()
@@ -24,4 +24,21 @@ exports.postRecipe = (req, res, next) => {
         res.status(201).send({recipe})
     })
     .catch(next)
+}
+
+exports.patchRecipeByID = (req, res, next) => {
+    const {id} = req.params
+   
+    const promises = Object.keys(req.body).map(key => {
+        return updateRecipeByID(id, key, req.body[key])
+    })
+
+   
+    return Promise.all(promises)
+    .then(() => {
+        return selectRecipeByID(id)
+    })
+    .then(recipe => {
+        res.status(200).send({recipe})
+    })
 }

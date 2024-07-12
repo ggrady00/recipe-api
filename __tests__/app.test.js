@@ -557,8 +557,8 @@ describe("endpoints", () => {
     });
   });
 
-  describe.only("POST /recipes", () => {
-    test.only("201: posts and responds with new recipe", () => {
+  describe("POST /recipes", () => {
+    test("201: posts and responds with new recipe", () => {
       const requestBody = {
         name: "Pesto Pasta",
         description: "Fresh and aromatic pasta with basil pesto",
@@ -698,4 +698,89 @@ describe("endpoints", () => {
         });
     })
   });
+  describe.only("PATCH /recipes/:id", ()=> {
+    test("200: patches and repsonds with updated recipe", ()=> {
+      return request(app)
+      .patch("/api/recipes/1")
+      .send({name: 'newName'})
+      .expect(200)
+      .then(({body: {recipe}}) => {
+        expect(recipe.name).toBe('newName')
+        expect(recipe).toHaveProperty("id");
+          expect(recipe).toHaveProperty("description");
+          expect(recipe).toHaveProperty("instructions");
+          expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("updated_at");
+          expect(recipe).toHaveProperty("ingredients");
+          expect(Array.isArray(recipe.ingredients)).toBe(true);
+
+      })
+    })
+    test("200: patches and repsonds with updated recipe when patching two properties at once", ()=> {
+      return request(app)
+      .patch("/api/recipes/1")
+      .send({name: 'newName', instructions: 'newInstructions'})
+      .expect(200)
+      .then(({body: {recipe}}) => {
+        expect(recipe.name).toBe('newName')
+        expect(recipe.instructions).toBe('newInstructions')
+        expect(recipe).toHaveProperty("id");
+          expect(recipe).toHaveProperty("description");
+          expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("updated_at");
+          expect(recipe).toHaveProperty("ingredients");
+          expect(Array.isArray(recipe.ingredients)).toBe(true);
+
+      })
+    })
+    test("200: patches and repsonds with updated recipe when patching ingredients", ()=> {
+      return request(app)
+      .patch("/api/recipes/1")
+      .send({ingredients: [{
+        id: 18,
+        quantity: "200g",
+      },
+      {
+        id: 19,
+        quantity: "2 cups",
+      }]})
+      .expect(200)
+      .then(({body: {recipe}}) => {
+        console.log(recipe)
+        expect(recipe.name).toBe('Spaghetti Carbonara')
+        expect(recipe).toHaveProperty("id");
+          expect(recipe).toHaveProperty("description");
+          expect(recipe).toHaveProperty("instructions");
+          expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("updated_at");
+          expect(recipe).toHaveProperty("ingredients");
+          expect(recipe.ingredients).toEqual([{ ingredient: "Pasta", quantity: "200g" },
+          { ingredient: "Basil", quantity: "2 cups" }])
+
+      })
+    })
+    test("200: patches and repsonds with updated recipe when patching tags", ()=> {
+      return request(app)
+      .patch("/api/recipes/1")
+      .send({tags: [1,2,3]})
+      .expect(200)
+      .then(({body: {recipe}}) => {
+        console.log(recipe)
+        expect(recipe.name).toBe('Spaghetti Carbonara')
+        expect(recipe).toHaveProperty("id");
+          expect(recipe).toHaveProperty("description");
+          expect(recipe).toHaveProperty("instructions");
+          expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("updated_at");
+          expect(recipe).toHaveProperty("ingredients");
+          expect(Array.isArray(recipe.ingredients)).toBe(true);
+          expect(recipe.tags).toEqual(['Italian', 'Pasta', 'Spicy'])
+
+      })
+    })
+
+
+  })
+
+
 });

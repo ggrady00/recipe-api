@@ -1,3 +1,4 @@
+const format = require("pg-format");
 const db = require("../../db/connection");
 const { insertTag } = require("./tags-models");
 
@@ -109,3 +110,31 @@ exports.insertRecipe = (body) => {
       return recipe;
     });
 };
+
+
+exports.updateRecipeByID = (id, property, updatedValue) => {
+  if(property === 'name' || property === 'description' ||property === 'instructions') {
+    let queryStr = `UPDATE recipes 
+                    SET %I = %L 
+                    WHERE id = %L`
+
+    const finalQueryStr = format(queryStr, property, updatedValue, id)
+    return db.query(finalQueryStr)
+  } else if (property === 'ingredients') {
+    return db.query(`DELETE FROM recipe_ingredients WHERE recipe_id = $1`, [id])
+    .then(()=> {
+      const promises = updatedValue.map(x => this.insertIngredient(id, x.id, x.quantity))
+      return Promise.all(promises)
+    })
+  } else if (property === 'tags') {
+    return db.query(`DELETE FROM recipe_tags WHERE recipe_id = $1`, [id])
+    .then(()=> {
+      console.log(updatedValue)
+      const promises = updatedValue.map(tag => this.insertTag(id, tag))
+      return Promise.all(promises)
+    })
+  }
+
+    
+    
+}
