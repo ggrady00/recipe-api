@@ -5,7 +5,7 @@ const recipeRouter = require("express").Router()
 recipeRouter
 .route("/")
 .get(getRecipes)
-// .post(postRecipe)
+.post(postRecipe)
 
 recipeRouter
 .route("/:id")

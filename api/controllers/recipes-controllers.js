@@ -17,7 +17,11 @@ exports.getRecipeByID = (req, res, next) => {
     .catch(next)
 }
 
-// exports.postRecipe = (req, res, next) => {
-//     const body = req.body
-//     insertRecipe(body)
-// }
+exports.postRecipe = (req, res, next) => {
+    const body = req.body
+    insertRecipe(body)
+    .then(recipe=>{
+        res.status(201).send({recipe})
+    })
+    .catch(next)
+}

@@ -311,7 +311,6 @@ describe("authentication", () => {
 });
 
 describe("endpoints", () => {
-  
   describe("GET /recipes", () => {
     test("200: returns an array of all recipes", () => {
       return request(app)
@@ -359,28 +358,33 @@ describe("endpoints", () => {
         .get("/api/recipes")
         .expect(200)
         .then(({ body: { recipes } }) => {
-          console.log(recipes)
+          console.log(recipes);
           expect(recipes[3].tags.length).toBe(4);
-          expect(recipes[3].tags).toEqual(["Mexican", "Tacos", "Quick", "Healthy"]);
+          expect(recipes[3].tags).toEqual([
+            "Mexican",
+            "Tacos",
+            "Quick",
+            "Healthy",
+          ]);
         });
     });
   });
-  describe("GET /recipes/:id", ()=> {
-    test("200: returns a recipe by id" ,() => {
+  describe("GET /recipes/:id", () => {
+    test("200: returns a recipe by id", () => {
       return request(app)
         .get("/api/recipes/2")
         .expect(200)
         .then(({ body: { recipe } }) => {
-            expect(recipe).toHaveProperty("id");
-            expect(recipe).toHaveProperty("name");
-            expect(recipe).toHaveProperty("description");
-            expect(recipe).toHaveProperty("instructions");
-            expect(recipe).toHaveProperty("created_at");
-            expect(recipe).toHaveProperty("updated_at");
-            expect(recipe).toHaveProperty("ingredients");
-            expect(Array.isArray(recipe.ingredients)).toBe(true);
+          expect(recipe).toHaveProperty("id");
+          expect(recipe).toHaveProperty("name");
+          expect(recipe).toHaveProperty("description");
+          expect(recipe).toHaveProperty("instructions");
+          expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("updated_at");
+          expect(recipe).toHaveProperty("ingredients");
+          expect(Array.isArray(recipe.ingredients)).toBe(true);
         });
-    })
+    });
     test("200: returns an correct array of ingredients for recipe", () => {
       return request(app)
         .get("/api/recipes/2")
@@ -393,238 +397,305 @@ describe("endpoints", () => {
             { ingredient: "Onion", quantity: "1 medium" },
             { ingredient: "Garlic", quantity: "3 cloves" },
             { ingredient: "Tomatoes", quantity: "2 large" },
-            { ingredient: "Coconut Milk", quantity: "400ml" }
+            { ingredient: "Coconut Milk", quantity: "400ml" },
           ]);
         });
-    })
+    });
     test("200: returns an correct array of tags for recipe", () => {
       return request(app)
         .get("/api/recipes/2")
         .expect(200)
         .then(({ body: { recipe } }) => {
-          console.log(recipe)
+          console.log(recipe);
           expect(recipe.tags.length).toBe(2);
           expect(recipe.tags).toEqual(["Curry", "Chicken"]);
         });
-    })
-    test("404: returns error when given a non existant recipe id", ()=> {
+    });
+    test("404: returns error when given a non existant recipe id", () => {
       return request(app)
-      .get("/api/recipes/999")
-      .expect(404)
-      .then(({body}) => {
-        expect(body.msg).toBe("Recipe not Found")
-      })
-    })
-    test("400: returns error when given a invalid recipe id", ()=> {
+        .get("/api/recipes/999")
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Recipe not Found");
+        });
+    });
+    test("400: returns error when given a invalid recipe id", () => {
       return request(app)
-      .get("/api/recipes/banana")
+        .get("/api/recipes/banana")
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+  });
+  describe("GET /ingredients", () => {
+    test("200: responds with array of ingredients", () => {
+      return request(app)
+        .get("/api/ingredients")
+        .expect(200)
+        .then(({ body: { ingredients } }) => {
+          console.log(ingredients);
+          expect(ingredients.length).toBe(21);
+          ingredients.forEach((ingredient) => {
+            expect(ingredient).toHaveProperty("id");
+            expect(ingredient).toHaveProperty("name");
+          });
+          expect(ingredients[0]).toEqual({ id: 1, name: "Spaghetti" });
+          expect(ingredients[20]).toEqual({ id: 21, name: "Olive Oil" });
+        });
+    });
+  });
+  describe("POST /ingredients", () => {
+    test("201: returns new ingredient and adds to db", () => {
+      return request(app)
+        .post("/api/ingredients")
+        .send({ name: "Butter" })
+        .expect(201)
+        .then(({ body: { ingredient } }) => {
+          expect(ingredient).toEqual({ id: 22, name: "Butter" });
+        });
+    });
+    test("400: returns error when body missing elements", () => {
+      return request(app)
+        .post("/api/ingredients")
+        .send({})
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("409: returns error when posting an ingredient already in database", () => {
+      return request(app)
+        .post("/api/ingredients")
+        .send({ name: "Spaghetti" })
+        .expect(409)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Already Exists");
+        });
+    });
+    test("400: returns error when invalid request body", () => {
+      return request(app)
+        .post("/api/ingredients")
+        .send({ name: ["Spaghetti"] })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("400: returns error when request body is an empty string", () => {
+      return request(app)
+        .post("/api/ingredients")
+        .send({ name: "" })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+  });
+  describe("GET /tags", () => {
+    test("200: returns an array of all tags", () => {
+      return request(app)
+        .get("/api/tags")
+        .expect(200)
+        .then(({ body: { tags } }) => {
+          expect(tags.length).toBe(10);
+          tags.forEach((tag) => {
+            expect(tag).toHaveProperty("id");
+            expect(tag).toHaveProperty("name");
+          });
+          expect(tags[0]).toEqual({ id: 1, name: "Italian" });
+          expect(tags[3]).toEqual({ id: 4, name: "Curry" });
+          expect(tags[8]).toEqual({ id: 9, name: "Quick" });
+        });
+    });
+  });
+  describe("POST /tags", () => {
+    test("201: returns new tag and adds to db", () => {
+      return request(app)
+        .post("/api/tags")
+        .send({ name: "Chinese" })
+        .expect(201)
+        .then(({ body: { tag } }) => {
+          expect(tag).toEqual({ id: 11, name: "Chinese" });
+        });
+    });
+    test("400: returns error when request body is missing elements", () => {
+      return request(app)
+        .post("/api/tags")
+        .send({})
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("409: returns error when tag already exists", () => {
+      return request(app)
+        .post("/api/tags")
+        .send({ name: "Curry" })
+        .expect(409)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Already Exists");
+        });
+    });
+    test("400: returns error when request body is invalid", () => {
+      return request(app)
+        .post("/api/tags")
+        .send({ name: { name: "Chinese" } })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("400: returns error when request body is an empty string", () => {
+      return request(app)
+        .post("/api/tags")
+        .send({ name: "" })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+  });
+
+  describe.only("POST /recipes", () => {
+    test.only("201: posts and responds with new recipe", () => {
+      const requestBody = {
+        name: "Pesto Pasta",
+        description: "Fresh and aromatic pasta with basil pesto",
+        instructions:
+          "1. Cook pasta. 2. Blend basil, garlic, pine nuts, and Parmesan cheese into pesto. 3. Mix with pasta and serve.",
+        ingredients: [
+          {
+            id: 18,
+            quantity: "200g",
+          },
+          {
+            id: 19,
+            quantity: "2 cups",
+          },
+          {
+            id: 8,
+            quantity: "2 cloves",
+          },
+          {
+            id: 20,
+            quantity: "1/4 cup",
+          },
+          {
+            id: 4,
+            quantity: "1/2 cup",
+          },
+          {
+            id: 21,
+            quantity: "1/4 cup",
+          },
+        ],
+        tags: [1,2,9]
+      };
+
+      return request(app)
+        .post("/api/recipes")
+        .send(requestBody)
+        .expect(201)
+        .then(({ body: { recipe } }) => {
+          expect(recipe).toHaveProperty("id");
+          expect(recipe.name).toBe(requestBody.name);
+          expect(recipe.description).toBe(requestBody.description);
+          expect(recipe.instructions).toBe(requestBody.instructions);
+          expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("updated_at");
+          expect(recipe.ingredients).toEqual([
+            { ingredient: "Parmesan Cheese", quantity: "1/2 cup" },
+            { ingredient: "Garlic", quantity: "2 cloves" },
+            { ingredient: "Pasta", quantity: "200g" },
+            { ingredient: "Basil", quantity: "2 cups" },
+            { ingredient: "Pine Nuts", quantity: "1/4 cup" },
+            { ingredient: "Olive Oil", quantity: "1/4 cup" },
+          ]);
+          expect(recipe.tags).toEqual(['Italian', 'Pasta', 'Quick'])
+        });
+    });
+    test("400: responds with error when body missing elements", ()=> { //require elements are name, instructions, ingredients
+      const requestBody = {
+        name: "test",
+        instructions: "1.sdf 2. sfd"
+      }
+
+      return request(app)
+      .post("/api/recipes")
+      .send(requestBody)
       .expect(400)
       .then(({body}) => {
         expect(body.msg).toBe("Bad Request")
       })
+
     })
-  })
-  describe("GET /ingredients", ()=> {
-    test("200: responds with array of ingredients", ()=> {
+    test("201: posts successfully when request has no tags", ()=> { 
+      const requestBody = {
+        name: "test",
+        instructions: "1.sdf 2. sfd",
+        ingredients: [{id: 1, quantity: '200g'}, {id: 2, quantity: 2}]
+      }
+
       return request(app)
-      .get("/api/ingredients")
-      .expect(200)
-      .then(({body: {ingredients}}) => {
-        console.log(ingredients)
-        expect(ingredients.length).toBe(21)
-        ingredients.forEach(ingredient => {
-          expect(ingredient).toHaveProperty('id')
-          expect(ingredient).toHaveProperty('name')
-        })
-        expect(ingredients[0]).toEqual({id: 1, name: 'Spaghetti'})
-        expect(ingredients[20]).toEqual({id: 21, name: 'Olive Oil'})
-      })
-    })
-  })
-  describe("POST /ingredients", ()=> {
-    test('201: returns new ingredient and adds to db', ()=> {
-      return request(app)
-      .post('/api/ingredients')
-      .send({name: 'Butter'})
+      .post("/api/recipes")
+      .send(requestBody)
       .expect(201)
-      .then(({body: {ingredient}}) => {
-        expect(ingredient).toEqual({id: 22, name: 'Butter'})
-      })
     })
-    test('400: returns error when body missing elements', ()=> {
+    test("400: respond with error when request has invalid data types", ()=> { 
+      const requestBody = {
+        name: "test",
+        instructions: "1.sdf 2. sfd",
+        ingredients: [1,2,3,4]
+      }
+
       return request(app)
-      .post('/api/ingredients')
-      .send({})
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe('Bad Request')
-      })
-    })
-    test('409: returns error when posting an ingredient already in database', ()=> {
-      return request(app)
-      .post('/api/ingredients')
-      .send({name: 'Spaghetti'})
-      .expect(409)
-      .then(({body}) => {
-        expect(body.msg).toBe('Already Exists')
-      })
-    })
-    test('400: returns error when invalid request body', ()=> {
-      return request(app)
-      .post('/api/ingredients')
-      .send({name: ['Spaghetti']})
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe('Bad Request')
-      })
-    })
-    test('400: returns error when request body is an empty string', ()=> {
-      return request(app)
-      .post('/api/ingredients')
-      .send({name: ''})
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe('Bad Request')
-      })
-    })
-  })
-  describe("GET /tags", ()=> {
-    test("200: returns an array of all tags", ()=> {
-      return request(app)
-      .get("/api/tags")
-      .expect(200)
-      .then(({body: {tags}}) => {
-        expect(tags.length).toBe(10)
-        tags.forEach(tag => {
-          expect(tag).toHaveProperty('id')
-          expect(tag).toHaveProperty('name')
-        })
-        expect(tags[0]).toEqual({id: 1, name: 'Italian'})
-        expect(tags[3]).toEqual({id: 4, name :'Curry'})
-        expect(tags[8]).toEqual({id: 9, name:'Quick'})
-      } )
-    })
-  })
-  describe("POST /tags", ()=> {
-    test("201: returns new tag and adds to db", ()=> {
-      return request(app)
-      .post("/api/tags")
-      .send({name: 'Chinese'})
-      .expect(201)
-      .then(({body: {tag}}) => {
-        expect(tag).toEqual({id: 11, name: 'Chinese'})
-      })
-    })
-    test("400: returns error when request body is missing elements", ()=> {
-      return request(app)
-      .post("/api/tags")
-      .send({})
+      .post("/api/recipes")
+      .send(requestBody)
       .expect(400)
       .then(({body}) => {
         expect(body.msg).toBe("Bad Request")
       })
     })
-    test("409: returns error when tag already exists", ()=> {
+    test("400: responds with error when request body is empty", () => {
       return request(app)
-      .post("/api/tags")
-      .send({name: 'Curry'})
-      .expect(409)
-      .then(({body}) => {
-        expect(body.msg).toBe("Already Exists")
-      })
-    })
-    test("400: returns error when request body is invalid", ()=> {
+        .post("/api/recipes")
+        .send({})
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("400: responds with error when ingredient has missing fields", () => {
+      const requestBody = {
+        name: "test",
+        instructions: "1. sdf 2. sfd",
+        ingredients: [{ id: 1 }],
+      };
+  
       return request(app)
-      .post("/api/tags")
-      .send({name: {name: 'Chinese'}})
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
-    test('400: returns error when request body is an empty string', ()=> {
+        .post("/api/recipes")
+        .send(requestBody)
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("400: responds with error when tags contain invalid data types", () => {
+      const requestBody = {
+        name: "test",
+        instructions: "1. sdf 2. sfd",
+        ingredients: [{ id: 1, quantity: "200g" }],
+        tags: ["invalidTag"],
+      };
+  
       return request(app)
-      .post('/api/tags')
-      .send({name: ''})
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe('Bad Request')
-      })
+        .post("/api/recipes")
+        .send(requestBody)
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
     })
-  })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // describe.only("POST /recipes", () => {
-  //   test("201: posts and responds with new recipe", () => {
-  //     const requestBody = {
-  //       name: "Pesto Pasta",
-  //       description: "Fresh and aromatic pasta with basil pesto",
-  //       instructions:
-  //         "1. Cook pasta. 2. Blend basil, garlic, pine nuts, and Parmesan cheese into pesto. 3. Mix with pasta and serve.",
-  //       ingredients: [
-  //         {
-  //           id: 18,
-  //           quantity: "200g",
-  //         },
-  //         {
-  //           id: 19,
-  //           quantity: "2 cups",
-  //         },
-  //         {
-  //           id: 8,
-  //           quantity: "2 cloves",
-  //         },
-  //         {
-  //           id: 20,
-  //           quantity: "1/4 cup",
-  //         },
-  //         {
-  //           id: 4,
-  //           quantity: "1/2 cup",
-  //         },
-  //         {
-  //           id: 21,
-  //           quantity: "1/4 cup",
-  //         },
-  //       ],
-  //     };
-
-  //     return request(app)
-  //     .post("/api/recipes")
-  //     .send(requestBody)
-  //     .expect(201)
-  //     .then(({body: {recipe}}) => {
-  //       expect(recipe).toHaveProperty("id");
-  //           expect(recipe.name).toBe(requestBody.name)
-  //           expect(recipe.description).toBe(requestBody.description)
-  //           expect(recipe.instructions).toBe(requestBody.instructions)
-  //           expect(recipe).toHaveProperty("created_at");
-  //           expect(recipe).toHaveProperty("updated_at");
-  //           expect(recipe.ingredients).toEqual([
-  //             { ingredient: "Pasta", quantity: "200g" },
-  //             { ingredient: "Basil", quantity: "2 cups" },
-  //             { ingredient: "Garlic", quantity: "2 cloves" },
-  //             { ingredient: "Pine Nuts", quantity: "1/4 cup" },
-  //             { ingredient: "Parmesan Cheese", quantity: "1/2 cup" },
-  //             { ingredient: "Olive Oil", quantity: "1/4 cup" }
-  //           ])
-  //     })
-  //   });
-  // });
+  });
 });

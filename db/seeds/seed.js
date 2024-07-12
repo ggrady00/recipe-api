@@ -46,7 +46,7 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
             id SERIAL PRIMARY KEY,
             name VARCHAR(50) NOT NULL,
             description VARCHAR(100),
-            instructions VARCHAR,
+            instructions VARCHAR NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP
         );`)
