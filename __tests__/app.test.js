@@ -331,6 +331,7 @@ describe("endpoints", () => {
             expect(recipe).toHaveProperty("description");
             expect(recipe).toHaveProperty("instructions");
             expect(recipe).toHaveProperty("created_at");
+            expect(recipe).toHaveProperty("created_by");
             expect(recipe).toHaveProperty("updated_at");
             expect(recipe).toHaveProperty("ingredients");
             expect(Array.isArray(recipe.ingredients)).toBe(true);
@@ -358,7 +359,6 @@ describe("endpoints", () => {
         .get("/api/recipes")
         .expect(200)
         .then(({ body: { recipes } }) => {
-          console.log(recipes);
           expect(recipes[3].tags.length).toBe(4);
           expect(recipes[3].tags).toEqual([
             "Mexican",
@@ -380,6 +380,7 @@ describe("endpoints", () => {
           expect(recipe).toHaveProperty("description");
           expect(recipe).toHaveProperty("instructions");
           expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("created_by");
           expect(recipe).toHaveProperty("updated_at");
           expect(recipe).toHaveProperty("ingredients");
           expect(Array.isArray(recipe.ingredients)).toBe(true);
@@ -406,7 +407,6 @@ describe("endpoints", () => {
         .get("/api/recipes/2")
         .expect(200)
         .then(({ body: { recipe } }) => {
-          console.log(recipe);
           expect(recipe.tags.length).toBe(2);
           expect(recipe.tags).toEqual(["Curry", "Chicken"]);
         });
@@ -434,7 +434,6 @@ describe("endpoints", () => {
         .get("/api/ingredients")
         .expect(200)
         .then(({ body: { ingredients } }) => {
-          console.log(ingredients);
           expect(ingredients.length).toBe(21);
           ingredients.forEach((ingredient) => {
             expect(ingredient).toHaveProperty("id");
@@ -558,6 +557,16 @@ describe("endpoints", () => {
   });
 
   describe("POST /recipes", () => {
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
     test("201: posts and responds with new recipe", () => {
       const requestBody = {
         name: "Pesto Pasta",
@@ -595,6 +604,7 @@ describe("endpoints", () => {
 
       return request(app)
         .post("/api/recipes")
+        .set("x-auth-token", token)
         .send(requestBody)
         .expect(201)
         .then(({ body: { recipe } }) => {
@@ -613,6 +623,7 @@ describe("endpoints", () => {
             { ingredient: "Olive Oil", quantity: "1/4 cup" },
           ]);
           expect(recipe.tags).toEqual(['Italian', 'Pasta', 'Quick'])
+          expect(recipe.created_by).toBe("madhatter")
         });
     });
     test("400: responds with error when body missing elements", ()=> { //require elements are name, instructions, ingredients
@@ -623,6 +634,7 @@ describe("endpoints", () => {
 
       return request(app)
       .post("/api/recipes")
+      .set("x-auth-token", token)
       .send(requestBody)
       .expect(400)
       .then(({body}) => {
@@ -639,6 +651,7 @@ describe("endpoints", () => {
 
       return request(app)
       .post("/api/recipes")
+      .set("x-auth-token", token)
       .send(requestBody)
       .expect(201)
     })
@@ -651,6 +664,7 @@ describe("endpoints", () => {
 
       return request(app)
       .post("/api/recipes")
+      .set("x-auth-token", token)
       .send(requestBody)
       .expect(400)
       .then(({body}) => {
@@ -660,6 +674,7 @@ describe("endpoints", () => {
     test("400: responds with error when request body is empty", () => {
       return request(app)
         .post("/api/recipes")
+        .set("x-auth-token", token)
         .send({})
         .expect(400)
         .then(({ body }) => {
@@ -675,6 +690,7 @@ describe("endpoints", () => {
   
       return request(app)
         .post("/api/recipes")
+        .set("x-auth-token", token)
         .send(requestBody)
         .expect(400)
         .then(({ body }) => {
@@ -691,17 +707,46 @@ describe("endpoints", () => {
   
       return request(app)
         .post("/api/recipes")
+        .set("x-auth-token", token)
         .send(requestBody)
         .expect(400)
         .then(({ body }) => {
           expect(body.msg).toBe("Bad Request");
         });
     })
+    test("401: responds with error when trying to post recipe with invalid/missing/expired token", () => {
+      const requestBody = {
+        name: "test",
+        instructions: "1. sdf 2. sfd",
+        ingredients: [{ id: 1, quantity: "200g" }],
+        tags: [1],
+      };
+  
+      return request(app)
+        .post("/api/recipes")
+        .set("x-auth-token", "invalidtoken")
+        .send(requestBody)
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    })
   });
   describe.only("PATCH /recipes/:id", ()=> {
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
     test("200: patches and repsonds with updated recipe", ()=> {
       return request(app)
       .patch("/api/recipes/1")
+      .set("x-auth-token", token)
       .send({name: 'newName'})
       .expect(200)
       .then(({body: {recipe}}) => {
@@ -710,6 +755,7 @@ describe("endpoints", () => {
           expect(recipe).toHaveProperty("description");
           expect(recipe).toHaveProperty("instructions");
           expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty('created_by')
           expect(recipe).toHaveProperty("updated_at");
           expect(recipe).toHaveProperty("ingredients");
           expect(Array.isArray(recipe.ingredients)).toBe(true);
@@ -719,6 +765,7 @@ describe("endpoints", () => {
     test("200: patches and repsonds with updated recipe when patching two properties at once", ()=> {
       return request(app)
       .patch("/api/recipes/1")
+      .set("x-auth-token", token)
       .send({name: 'newName', instructions: 'newInstructions'})
       .expect(200)
       .then(({body: {recipe}}) => {
@@ -736,6 +783,7 @@ describe("endpoints", () => {
     test("200: patches and repsonds with updated recipe when patching ingredients", ()=> {
       return request(app)
       .patch("/api/recipes/1")
+      .set("x-auth-token", token)
       .send({ingredients: [{
         id: 18,
         quantity: "200g",
@@ -746,7 +794,6 @@ describe("endpoints", () => {
       }]})
       .expect(200)
       .then(({body: {recipe}}) => {
-        console.log(recipe)
         expect(recipe.name).toBe('Spaghetti Carbonara')
         expect(recipe).toHaveProperty("id");
           expect(recipe).toHaveProperty("description");
@@ -762,6 +809,7 @@ describe("endpoints", () => {
     test("200: patches and repsonds with updated recipe when patching tags", ()=> {
       return request(app)
       .patch("/api/recipes/1")
+      .set("x-auth-token", token)
       .send({tags: [1,2,3]})
       .expect(200)
       .then(({body: {recipe}}) => {
@@ -771,16 +819,117 @@ describe("endpoints", () => {
           expect(recipe).toHaveProperty("description");
           expect(recipe).toHaveProperty("instructions");
           expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty('created_by')
           expect(recipe).toHaveProperty("updated_at");
           expect(recipe).toHaveProperty("ingredients");
           expect(Array.isArray(recipe.ingredients)).toBe(true);
           expect(recipe.tags).toEqual(['Italian', 'Pasta', 'Spicy'])
-
       })
     })
-
-
+    test("200: after a successful patch the updated at column is updated", ()=> {
+      const time = new Date().toISOString().substring(0,16)
+      return request(app)
+      .patch("/api/recipes/1")
+      .set("x-auth-token", token)
+      .send({name: 'newName'})
+      .expect(200)
+      .then(({body: {recipe}}) => {
+        const updated_at = recipe.updated_at
+        const formattedUpdated = updated_at.substring(0,16)
+        expect(formattedUpdated).toBe(time)
+      })
+    })
+    test("200: after a successful patch the updated at column is updated (tags)", ()=> {
+      const time = new Date().toISOString().substring(0,16)
+      return request(app)
+      .patch("/api/recipes/1")
+      .set("x-auth-token", token)
+      .send({tags: [1,2,3]})
+      .expect(200)
+      .then(({body: {recipe}}) => {
+        const updated_at = recipe.updated_at
+        const formattedUpdated = updated_at.substring(0,16)
+        expect(formattedUpdated).toBe(time)
+      })
+    })
+    test("200: after a successful patch the updated at column is updated (ing)", ()=> {
+      const time = new Date().toISOString().substring(0,16)
+      return request(app)
+      .patch("/api/recipes/1")
+      .set("x-auth-token", token)
+      .send({ingredients: [{
+        id: 18,
+        quantity: "200g",
+      },
+      {
+        id: 19,
+        quantity: "2 cups",
+      }]})
+      .expect(200)
+      .then(({body: {recipe}}) => {
+        const updated_at = recipe.updated_at
+        const formattedUpdated = updated_at.substring(0,16)
+        expect(formattedUpdated).toBe(time)
+      })
+    })
+    test("400: returns error when empty request body", ()=> {
+      return request(app)
+      .patch("/api/recipes/1")
+      .set("x-auth-token", token)
+      .send()
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe('Bad Request')
+      })
+    })
+    test("400: returns error when invalid patch request", ()=> {
+      return request(app)
+      .patch("/api/recipes/1")
+      .set("x-auth-token", token)
+      .send({created_by: 'me'})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe('Bad Request')
+      })
+    })
+    test("400: returns error when missing token", ()=> {
+      return request(app)
+      .patch("/api/recipes/1")
+      .send({tags: [1,2,3]})
+      .expect(401)
+      .then(({body}) => {
+        expect(body.msg).toBe('Missing Token')
+      })
+    })
+    test("400: returns error when trying to patch a recipe not created_by the user", ()=> {
+      return request(app)
+      .patch("/api/recipes/3")
+      .set("x-auth-token", token)
+      .send({tags: [1,2,3]})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe('You cannot update this recipe')
+      })
+    })
+    test("404: returns error when trying to patch a non existant recipe_id", ()=> {
+      return request(app)
+      .patch("/api/recipes/999")
+      .set("x-auth-token", token)
+      .send({tags: [1,2,3]})
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe('Not Found')
+      })
+    })
+    test("400: returns error when trying to patch an invalid recipe id", ()=> {
+      return request(app)
+      .patch("/api/recipes/banana")
+      .set("x-auth-token", token)
+      .send({tags: [1,2,3]})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe('Bad Request')
+      })
+    })
   })
-
-
 });

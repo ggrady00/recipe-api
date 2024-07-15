@@ -13,8 +13,12 @@ exports.selectAllRecipes = () => {
         })
         .then((tags) => {
           recipe.tags = tags;
-          return recipe;
-        });
+          return this.selectUserByID(recipe.created_by)
+        })
+        .then((user) => {
+          recipe.created_by = user
+          return recipe
+        })
     });
     return Promise.all(recipeWithIngredients);
   });
@@ -40,6 +44,14 @@ exports.selectTagsByID = (id) => {
   });
 };
 
+exports.selectUserByID = (id) => {
+  const queryStr = `SELECT username FROM users
+                      WHERE id = $1;`;
+  return db.query(queryStr, [id]).then(({ rows }) => {
+    return rows[0].username
+  });
+};
+
 exports.selectRecipeByID = (id) => {
   const queryStr = `SELECT * FROM recipes WHERE id = $1`;
   return db
@@ -56,8 +68,12 @@ exports.selectRecipeByID = (id) => {
     })
     .then((tags) => {
       recipe.tags = tags;
-      return recipe;
-    });
+      return this.selectUserByID(recipe.created_by)
+    })
+    .then((user) => {
+      recipe.created_by = user
+      return recipe
+    })
 };
 
 exports.insertTag = (id, tag) => {
@@ -77,7 +93,7 @@ exports.insertIngredient = (recipe_id, ing_id, quantity) => {
         ])
 }
 
-exports.insertRecipe = (body) => {
+exports.insertRecipe = (body, user_id) => {
   const ingredients = body.ingredients;
   const tags = body.tags;
 
@@ -88,11 +104,11 @@ exports.insertRecipe = (body) => {
     }
   }
 
-  const queryStr = `INSERT INTO recipes (name, description, instructions)
-                      VALUES ($1, $2, $3)
+  const queryStr = `INSERT INTO recipes (name, description, instructions, created_by)
+                      VALUES ($1, $2, $3, $4)
                       RETURNING id;`;
   return db
-    .query(queryStr, [body.name, body.description, body.instructions])
+    .query(queryStr, [body.name, body.description, body.instructions, user_id])
     .then(({ rows }) => {
       id = rows[0].id;
       const promises = ingredients.map(ingredient => this.insertIngredient(id, ingredient.id, ingredient.quantity))
@@ -113,28 +129,40 @@ exports.insertRecipe = (body) => {
 
 
 exports.updateRecipeByID = (id, property, updatedValue) => {
+  let queryStr = `UPDATE recipes
+                  SET updated_at = NOW()`
   if(property === 'name' || property === 'description' ||property === 'instructions') {
-    let queryStr = `UPDATE recipes 
-                    SET %I = %L 
-                    WHERE id = %L`
+    queryStr += `, %I = %L`
 
-    const finalQueryStr = format(queryStr, property, updatedValue, id)
-    return db.query(finalQueryStr)
+    queryStr = format(queryStr, property, updatedValue)
   } else if (property === 'ingredients') {
+    queryStr += ` WHERE id = $1`
     return db.query(`DELETE FROM recipe_ingredients WHERE recipe_id = $1`, [id])
     .then(()=> {
       const promises = updatedValue.map(x => this.insertIngredient(id, x.id, x.quantity))
-      return Promise.all(promises)
+      return Promise.all(promises, db.query(queryStr, [id]))
     })
   } else if (property === 'tags') {
+    queryStr += ` WHERE id = $1`
     return db.query(`DELETE FROM recipe_tags WHERE recipe_id = $1`, [id])
     .then(()=> {
-      console.log(updatedValue)
       const promises = updatedValue.map(tag => this.insertTag(id, tag))
-      return Promise.all(promises)
+      return Promise.all(promises, db.query(queryStr, [id]))
     })
+  } else {
+    return Promise.reject({status: 400, msg: 'Bad Request'})
   }
+  queryStr += ` WHERE id = $1`
+  return db.query(queryStr, [id])
+}
 
-    
-    
+
+exports.validateRecipeOwner = (recipe_id, user_id) => {
+  return db.query(`SELECT created_by FROM recipes WHERE id = $1`, [recipe_id])
+  .then(({rows}) => {
+    if(!rows.length) return Promise.reject({status:404, msg: 'Not Found'})
+    if (rows[0].created_by !== user_id) {
+      return Promise.reject({status:400, msg: 'You cannot update this recipe'})
+    }
+  })
 }

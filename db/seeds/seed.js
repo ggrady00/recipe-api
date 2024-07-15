@@ -41,22 +41,26 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
             password VARCHAR(100) NOT NULL,
             profile_info VARCHAR(100)
         );`)
-        const recipesTablePromise =db.query(`
-        CREATE TABLE recipes (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(50) NOT NULL,
-            description VARCHAR(100),
-            instructions VARCHAR NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP
-        );`)
+        
 
         const ingredientsTablePromise = db.query(`
         CREATE TABLE ingredients (
             id SERIAL PRIMARY KEY,
             name VARCHAR(50) UNIQUE NOT NULL
         );`)
-        return Promise.all([tagsTablePromise, usersTablePromise, recipesTablePromise, ingredientsTablePromise])
+        return Promise.all([tagsTablePromise, usersTablePromise, ingredientsTablePromise])
+    })
+    .then(()=>{
+        return db.query(`
+        CREATE TABLE recipes (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50) NOT NULL,
+            description VARCHAR(100),
+            instructions VARCHAR NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            created_by INT references users(id),
+            updated_at TIMESTAMP
+        );`)
     })
     .then(()=>{
         return db.query(`
@@ -118,12 +122,14 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         )
         const ingredientsPromise = db.query(insertIngredientsQueryStr)
 
+        return Promise.all([tagsPromise, usersPromise, ingredientsPromise])
+    })
+    .then(()=>{
         const insertRecipesQueryStr = format(
-            `INSERT INTO recipes (name, description, instructions) VALUES %L;`,
-            recipesData.map(({name, description, instructions}) => [name, description, instructions])
+            `INSERT INTO recipes (name, description, instructions, created_by) VALUES %L;`,
+            recipesData.map(({name, description, instructions, created_by}) => [name, description, instructions, created_by])
         )
-        const recipesPromise = db.query(insertRecipesQueryStr)
-        return Promise.all([tagsPromise, usersPromise, recipesPromise, ingredientsPromise])
+        return db.query(insertRecipesQueryStr)
     })
     .then(()=>{
         const insertCommentsQueryStr = format(
