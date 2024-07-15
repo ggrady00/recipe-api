@@ -131,29 +131,37 @@ exports.insertRecipe = (body, user_id) => {
 exports.updateRecipeByID = (id, property, updatedValue) => {
   let queryStr = `UPDATE recipes
                   SET updated_at = NOW()`
+
   if(property === 'name' || property === 'description' ||property === 'instructions') {
     queryStr += `, %I = %L`
 
     queryStr = format(queryStr, property, updatedValue)
+    queryStr += ` WHERE id = $1`
+    return db.query(queryStr, [id])
+
   } else if (property === 'ingredients') {
     queryStr += ` WHERE id = $1`
+
     return db.query(`DELETE FROM recipe_ingredients WHERE recipe_id = $1`, [id])
     .then(()=> {
       const promises = updatedValue.map(x => this.insertIngredient(id, x.id, x.quantity))
       return Promise.all(promises, db.query(queryStr, [id]))
     })
+
   } else if (property === 'tags') {
+
     queryStr += ` WHERE id = $1`
+
     return db.query(`DELETE FROM recipe_tags WHERE recipe_id = $1`, [id])
     .then(()=> {
       const promises = updatedValue.map(tag => this.insertTag(id, tag))
       return Promise.all(promises, db.query(queryStr, [id]))
     })
+    
   } else {
     return Promise.reject({status: 400, msg: 'Bad Request'})
   }
-  queryStr += ` WHERE id = $1`
-  return db.query(queryStr, [id])
+
 }
 
 
@@ -164,5 +172,21 @@ exports.validateRecipeOwner = (recipe_id, user_id) => {
     if (rows[0].created_by !== user_id) {
       return Promise.reject({status:400, msg: 'You cannot update this recipe'})
     }
+  })
+}
+
+exports.removeRecipeByID = (recipe_id) => {
+  return db.query(`DELETE FROM recipe_ingredients WHERE recipe_id = $1`, [recipe_id])
+  .then(()=>{
+    return db.query(`DELETE FROM recipe_tags WHERE recipe_id = $1`, [recipe_id])
+  })
+  .then(()=>{
+    return db.query(`DELETE FROM comments WHERE recipe_id = $1`, [recipe_id])
+  })
+  .then(()=>{
+    return db.query(`DELETE FROM ratings WHERE recipe_id = $1`, [recipe_id])
+  })
+  .then(()=>{
+    return db.query(`DELETE FROM recipes WHERE id = $1`, [recipe_id])
   })
 }

@@ -732,7 +732,7 @@ describe("endpoints", () => {
         });
     })
   });
-  describe.only("PATCH /recipes/:id", ()=> {
+  describe("PATCH /recipes/:id", ()=> {
     const login = { username: "madhatter", password: "unsafepw" };
     let token;
     beforeAll(() => {
@@ -929,6 +929,95 @@ describe("endpoints", () => {
       .expect(400)
       .then(({body}) => {
         expect(body.msg).toBe('Bad Request')
+      })
+    })
+  })
+  describe("DELETE /recipes/:id", ()=> {
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("204: deletes a recipe by recipe_id all everything referencing it in other tables", ()=>{
+      return request(app)
+      .delete("/api/recipes/1")
+      .set("x-auth-token", token)
+      .expect(204)
+      .then((data)=>{
+        return request(app).get("/api/recipes/1").expect(404)
+      })
+      .then(()=>{
+        return db.query(`SELECT * FROM recipe_tags WHERE recipe_id = 1;`)
+      })
+      .then(({rows}) => {
+        expect(rows.length).toBe(0)
+      })
+      .then(()=>{
+        return db.query(`SELECT * FROM recipe_ingredients WHERE recipe_id = 1;`)
+      })
+      .then(({rows}) => {
+        expect(rows.length).toBe(0)
+      })
+      .then(()=>{
+        return db.query(`SELECT * FROM ratings WHERE recipe_id = 1;`)
+      })
+      .then(({rows}) => {
+        expect(rows.length).toBe(0)
+      })
+      .then(()=>{
+        return db.query(`SELECT * FROM comments WHERE recipe_id = 1;`)
+      })
+      .then(({rows}) => {
+        expect(rows.length).toBe(0)
+      })
+    })
+    test("400: returns error when invalid id", ()=> {
+      return request(app)
+      .delete("/api/recipes/banana")
+      .set("x-auth-token", token)
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("400: returns error when non existant id", ()=> {
+      return request(app)
+      .delete("/api/recipes/999")
+      .set("x-auth-token", token)
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Not Found")
+      })
+    })
+    test("401: returns error when missing token", ()=> {
+      return request(app)
+      .delete("/api/recipes/1")
+      .expect(401)
+      .then(({body}) => {
+        expect(body.msg).toBe("Missing Token")
+      })
+    })
+    test("401: returns error when invalid token", ()=> {
+      return request(app)
+      .delete("/api/recipes/1")
+      .set("x-auth-token", "invalid")
+      .expect(401)
+      .then(({body}) => {
+        expect(body.msg).toBe("Invalid Token")
+      })
+    })
+    test("401: returns error when valid token but unauthroized permissions", ()=> {
+      return request(app)
+      .delete("/api/recipes/4")
+      .set("x-auth-token", token)
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("You cannot update this recipe")
       })
     })
   })

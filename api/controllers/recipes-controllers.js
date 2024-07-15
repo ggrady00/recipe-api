@@ -1,4 +1,4 @@
-const { selectAllRecipes, insertRecipe, selectRecipeByID, updateRecipeByID, validateRecipeOwner } = require("../models/recipes-models")
+const { selectAllRecipes, insertRecipe, selectRecipeByID, updateRecipeByID, validateRecipeOwner, removeRecipeByID } = require("../models/recipes-models")
 
 exports.getRecipes = (req, res, next) => {
     selectAllRecipes()
@@ -38,8 +38,6 @@ exports.patchRecipeByID = (req, res, next) => {
         const promises = Object.keys(req.body).map(key => {
             return updateRecipeByID(id, key, req.body[key])
         })
-    
-       
         return Promise.all(promises)
     })
     .then(() => {
@@ -47,6 +45,24 @@ exports.patchRecipeByID = (req, res, next) => {
     })
     .then(recipe => {
         res.status(200).send({recipe})
+    })
+    .catch(next)
+}
+
+exports.deleteRecipeByID = (req, res, next) => {
+    const {id} = req.params
+    const user_id = req.user_id
+    validateRecipeOwner(id, user_id)
+    .then(()=>{
+        
+        return selectRecipeByID(id)
+    })
+    .then(()=>{
+
+        return removeRecipeByID(id)
+    })
+    .then(()=>{
+        res.status(204).send()
     })
     .catch(next)
 }

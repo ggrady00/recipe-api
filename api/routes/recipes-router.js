@@ -1,4 +1,4 @@
-const { getRecipes, postRecipe, getRecipeByID, patchRecipeByID } = require("../controllers/recipes-controllers")
+const { getRecipes, postRecipe, getRecipeByID, patchRecipeByID, deleteRecipeByID } = require("../controllers/recipes-controllers")
 const { authenticateToken } = require("../middleware/auth")
 
 const recipeRouter = require("express").Router()
@@ -12,6 +12,9 @@ recipeRouter
 .route("/:id")
 .get(getRecipeByID)
 .patch(authenticateToken, patchRecipeByID)
+.delete(authenticateToken, deleteRecipeByID)
+
+
 
 
 module.exports = recipeRouter
