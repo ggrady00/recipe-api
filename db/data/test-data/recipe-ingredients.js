@@ -73,5 +73,25 @@ module.exports = [
         recipe_id: 4,  // Beef Tacos
         ingredient_id: 15,  // Cheese
         quantity: '100g'
-    }
+    },
+    {
+        recipe_id: 5,  // Spaghetti Bolognese
+        ingredient_id: 1,  // Spaghetti
+        quantity: '200g'
+    },
+    {
+        recipe_id: 5,  // Spaghetti Bolognese
+        ingredient_id: 13,  //Beef
+        quantity: '250g'
+    },
+    {
+        recipe_id: 5,  // Spaghetti Bolognese
+        ingredient_id: 7,  // Onion
+        quantity: '1 medium'
+    },
+    {
+        recipe_id: 5,  // Spaghetti Bolognese
+        ingredient_id: 9,  // Tomato
+        quantity: '1 medium'
+    },
 ];

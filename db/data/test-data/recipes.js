@@ -22,5 +22,11 @@ module.exports = [
         description: 'Mexican-style beef tacos',
         instructions: '1. Cook beef with spices. 2. Prepare taco shells. 3. Assemble tacos with beef, cheese, and toppings.',
         created_by: 4
-    }
+    },
+    {
+        name: 'Spaghetti Bolognese',
+        description: 'Traditional Italian pasta with meat sauce',
+        instructions: '1. Boil pasta. 2. Cook minced beef with onions and garlic. 3. Add tomatoes and simmer. 4. Combine with pasta.',
+        created_by: 3
+    },
 ];

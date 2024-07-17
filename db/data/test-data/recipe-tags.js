@@ -38,6 +38,14 @@ module.exports = [
     {
         recipe_id: 4,  // Beef Tacos
         tag_id: 10  // Healthy
-    }
+    },
+    {
+        recipe_id: 5,  // Spaghetti Carbonara
+        tag_id: 1  // Italian
+    },
+    {
+        recipe_id: 5,  // Spaghetti Carbonara
+        tag_id: 2  // Pasta
+    },
 ];
 

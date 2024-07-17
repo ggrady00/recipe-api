@@ -8,6 +8,7 @@ module.exports = [
     { name: 'Mexican' },
     { name: 'Tacos' },
     { name: 'Quick' },
-    { name: 'Healthy' }
+    { name: 'Healthy' },
+    {name: 'Korean'}
 ];
 

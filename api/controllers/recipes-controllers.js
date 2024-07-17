@@ -1,7 +1,23 @@
-const { selectAllRecipes, insertRecipe, selectRecipeByID, updateRecipeByID, validateRecipeOwner, removeRecipeByID } = require("../models/recipes-models")
+const { selectAllRecipes, insertRecipe, selectRecipeByID, updateRecipeByID, validateRecipeOwner, removeRecipeByID, selectRecipesByIngredients, checkExists, selectRecipesByTags } = require("../models/recipes-models")
 
 exports.getRecipes = (req, res, next) => {
-    selectAllRecipes()
+    const {ingredients, tags} = req.query
+    const promises = []
+    if(ingredients) promises.push(checkExists("ingredients", "name", ingredients))
+    if(tags) promises.push(checkExists("tags", "name", tags))
+    Promise.all(promises)
+    .then(()=>{
+        if(ingredients) {
+            return selectRecipesByIngredients([ingredients])
+        } else {
+            return selectRecipesByTags([tags])
+        }
+    })
+    .then((id) => {
+        if(!id) id = 'none'
+        if(ingredients || tags) return selectAllRecipes(id)
+        return selectAllRecipes()
+    })
     .then((recipes) => {
         res.status(200).send({recipes})
     })
@@ -30,6 +46,7 @@ exports.postRecipe = (req, res, next) => {
 exports.patchRecipeByID = (req, res, next) => {
     const {id} = req.params
     const user_id = req.user_id
+    
 
     if (!Object.keys(req.body).length) return res.status(400).send({msg: 'Bad Request'})
 

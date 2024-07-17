@@ -317,7 +317,7 @@ describe("endpoints", () => {
         .get("/api/recipes")
         .expect(200)
         .then(({ body: { recipes } }) => {
-          expect(recipes.length).toBe(4);
+          expect(recipes.length).toBe(5);
         });
     });
     test("200: returns recipes with correct properties", () => {
@@ -434,7 +434,7 @@ describe("endpoints", () => {
         .get("/api/ingredients")
         .expect(200)
         .then(({ body: { ingredients } }) => {
-          expect(ingredients.length).toBe(21);
+          expect(ingredients.length).toBe(22);
           ingredients.forEach((ingredient) => {
             expect(ingredient).toHaveProperty("id");
             expect(ingredient).toHaveProperty("name");
@@ -451,7 +451,7 @@ describe("endpoints", () => {
         .send({ name: "Butter" })
         .expect(201)
         .then(({ body: { ingredient } }) => {
-          expect(ingredient).toEqual({ id: 22, name: "Butter" });
+          expect(ingredient).toEqual({ id: 23, name: "Butter" });
         });
     });
     test("400: returns error when body missing elements", () => {
@@ -497,7 +497,7 @@ describe("endpoints", () => {
         .get("/api/tags")
         .expect(200)
         .then(({ body: { tags } }) => {
-          expect(tags.length).toBe(10);
+          expect(tags.length).toBe(11);
           tags.forEach((tag) => {
             expect(tag).toHaveProperty("id");
             expect(tag).toHaveProperty("name");
@@ -515,7 +515,7 @@ describe("endpoints", () => {
         .send({ name: "Chinese" })
         .expect(201)
         .then(({ body: { tag } }) => {
-          expect(tag).toEqual({ id: 11, name: "Chinese" });
+          expect(tag).toEqual({ id: 12, name: "Chinese" });
         });
     });
     test("400: returns error when request body is missing elements", () => {
@@ -1020,5 +1020,76 @@ describe("endpoints", () => {
         expect(body.msg).toBe("You cannot update this recipe")
       })
     })
+  })
+  describe("GET /recipes filter by tags and ingredients", ()=>{
+    test("200: returns all recipes when given a certain ingredient query", ()=>{
+      return request(app)
+      .get("/api/recipes?ingredients=spaghetti")
+      .expect(200)
+      .then(({body: {recipes}}) => {
+        expect(recipes.length).toBe(2)
+        expect(recipes[0].name).toBe("Spaghetti Carbonara")
+        expect(recipes[1].name).toBe("Spaghetti Bolognese")
+        expect(recipes[0].id).toBe(1)
+          expect(recipes[0]).toHaveProperty("description");
+          expect(recipes[0]).toHaveProperty("instructions");
+          expect(recipes[0]).toHaveProperty("created_at");
+          expect(recipes[0]).toHaveProperty("created_by");
+          expect(recipes[0]).toHaveProperty("updated_at");
+          expect(recipes[0]).toHaveProperty("ingredients");
+          expect(Array.isArray(recipes[0].ingredients)).toBe(true);
+      })
+    })
+    test("404: returns error when given a invalid ingredient query", ()=>{
+      return request(app)
+      .get("/api/recipes?ingredients=123")
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Resource not Found")
+      })
+    })
+    test("200: returns empty array when given a valid ingredient but no recipes", ()=>{
+      return request(app)
+      .get("/api/recipes?ingredients=mushroom")
+      .expect(200)
+      .then(({body: {recipes}}) => {
+        expect(recipes).toEqual([])
+      })
+    })
+    test("200: returns all recipes when given a certain tag query", ()=>{
+      return request(app)
+      .get("/api/recipes?tags=quick")
+      .expect(200)
+      .then(({body: {recipes}}) => {
+        expect(recipes.length).toBe(2)
+        expect(recipes[0].name).toBe("Vegetable Stir Fry")
+        expect(recipes[1].name).toBe("Beef Tacos")
+        expect(recipes[0].id).toBe(3)
+          expect(recipes[0]).toHaveProperty("description");
+          expect(recipes[0]).toHaveProperty("instructions");
+          expect(recipes[0]).toHaveProperty("created_at");
+          expect(recipes[0]).toHaveProperty("created_by");
+          expect(recipes[0]).toHaveProperty("updated_at");
+          expect(recipes[0]).toHaveProperty("ingredients");
+          expect(Array.isArray(recipes[0].ingredients)).toBe(true);
+      })
+    })
+    test("404: returns error when given a invalid ingredient query", ()=>{
+      return request(app)
+      .get("/api/recipes?tags=123")
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Resource not Found")
+      })
+    })
+    test("200: returns empty array when given a valid tag but no recipes", ()=>{
+      return request(app)
+      .get("/api/recipes?tags=korean")
+      .expect(200)
+      .then(({body: {recipes}}) => {
+        expect(recipes).toEqual([])
+      })
+    })
+    
   })
 });

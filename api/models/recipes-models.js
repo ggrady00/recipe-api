@@ -2,8 +2,15 @@ const format = require("pg-format");
 const db = require("../../db/connection");
 const { insertTag } = require("./tags-models");
 
-exports.selectAllRecipes = () => {
-  const queryStr = `SELECT * FROM recipes;`;
+exports.selectAllRecipes = (id) => {
+  console.log(id)
+  let queryStr = `SELECT * FROM recipes`;
+  if(id == 'none') return []
+  if(id) {
+    queryStr += ` WHERE id IN %L`
+    queryStr = format(queryStr, [id])
+  }
+  console.log(queryStr)
   return db.query(queryStr).then(({ rows }) => {
     const recipeWithIngredients = rows.map((recipe) => {
       return this.selectIngredientsByID(recipe.id)
@@ -23,6 +30,47 @@ exports.selectAllRecipes = () => {
     return Promise.all(recipeWithIngredients);
   });
 };
+ exports.checkExists = (table, column, value) => {
+    const queryStr = format(`SELECT * FROM %I WHERE %I ILIKE $1;`, table, column)
+    return db.query(queryStr, [value])
+    .then(({rows}) => {
+        if (!rows.length) {
+            return Promise.reject({status: 404, msg: "Resource not Found"})
+        } else {
+            return rows[0]
+        }
+    })
+}
+
+exports.selectRecipesByIngredients = (ingredients) => {
+  const queryStr = `SELECT ri.recipe_id 
+                    FROM recipe_ingredients ri 
+                    LEFT JOIN ingredients i 
+                    ON i.id = ri.ingredient_id 
+                    WHERE i.name ILIKE $1;`
+  return db.query(queryStr, ingredients)
+  .then(({rows}) => {
+    if (!rows.length) return
+    else {
+      return rows.map(recipe => recipe.recipe_id)
+    }
+  })
+}
+
+exports.selectRecipesByTags = (tags) => {
+  const queryStr = `SELECT rt.recipe_id 
+                    FROM recipe_tags rt
+                    LEFT JOIN tags t
+                    ON t.id = rt.tag_id 
+                    WHERE t.name ILIKE $1;`
+  return db.query(queryStr, tags)
+  .then(({rows}) => {
+    if (!rows.length) return
+    else {
+      return rows.map(recipe => recipe.recipe_id)
+    }
+  })
+}
 
 exports.selectIngredientsByID = (id) => {
   const queryStr = `SELECT i.name as ingredient, ri.quantity FROM recipe_ingredients ri
