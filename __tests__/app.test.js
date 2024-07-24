@@ -1092,4 +1092,132 @@ describe("endpoints", () => {
     })
     
   })
+  describe("GET ratings/id", ()=>{
+    test("200: returns array of all ratings by id and avergae rating", ()=> {
+      return request(app)
+      .get("/api/ratings/4")
+      .expect(200)
+      .then(({body}) => {
+        expect(body.ratings.length).toBe(2)
+        body.ratings.forEach(rating => {
+          expect(rating.recipe_id).toBe(4)
+          expect(rating).toHaveProperty("user_id")
+          expect(rating).toHaveProperty("rating")
+          expect(rating).toHaveProperty("created_at")
+        })
+        expect(body.average).toBe(4)
+      })
+    })
+    test("404: returns error when given non-existant id", ()=>{
+      return request(app)
+      .get("/api/ratings/999")
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Recipe not Found")
+      })
+    })
+    test("400: returns error when given invalid id", ()=>{
+      return request(app)
+      .get("/api/ratings/banana")
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+  })
+  describe.only("POST ratings/id", ()=>{
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("201: returns newly posted rating and adds to db", ()=>{
+      const time = new Date().toISOString().substring(0,16)
+      const requestBody = {rating: 5}
+      return request(app)
+      .post("/api/ratings/2")
+      .send(requestBody)
+      .set("x-auth-token", token)
+      .expect(201)
+      .then(({body: {rating}}) => {
+        expect(rating.recipe_id).toBe(2)
+        expect(rating.user_id).toBe(1)
+        expect(rating.rating).toBe(5)
+        expect(rating.created_at.substring(0,16)).toBe(time)
+      })
+      .then(()=>{
+        return request(app)
+        .get("/api/ratings/2")
+        .expect(200)
+      })
+      .then(({body}) => {
+        expect(body.ratings.length).toBe(2)
+        expect(body.average).toBe(4.5)
+      })
+    })
+    test("400: responds with error when body missing elements", ()=>{
+      return request(app)
+      .post("/api/ratings/2")
+      .set("x-auth-token", token)
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("400: responds with error when body has invalid datatype", ()=>{
+      return request(app)
+      .post("/api/ratings/2")
+      .set("x-auth-token", token)
+      .send({rating: "hello"})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("404: responds with error when non-existant id", ()=>{
+      return request(app)
+      .post("/api/ratings/999")
+      .set("x-auth-token", token)
+      .send({rating: 4})
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Recipe not Found")
+      })
+    })
+    test("400: responds with error when invalid id", ()=>{
+      return request(app)
+      .post("/api/ratings/banana")
+      .set("x-auth-token", token)
+      .send({rating: 4})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("401: responds with error trying to post with invalid/missing/expired token", ()=>{
+      return request(app)
+      .post("/api/ratings/1")
+      .set("x-auth-token", 'invalidToken')
+      .send({rating: 4})
+      .expect(401)
+      .then(({body}) => {
+        expect(body.msg).toBe("Invalid Token")
+      })
+    })
+    test("409: responds with error trying to post a rating to a recipe_id the user already has a rating for", ()=>{
+      return request(app)
+      .post("/api/ratings/1")
+      .set("x-auth-token", token)
+      .send({rating: 4})
+      .expect(409)
+      .then(({body}) => {
+        expect(body.msg).toBe("Already Exists")
+      })
+    })
+  })
 });
