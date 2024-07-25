@@ -600,7 +600,7 @@ describe("endpoints", () => {
             quantity: "1/4 cup",
           },
         ],
-        tags: [1,2,9]
+        tags: [1, 2, 9],
       };
 
       return request(app)
@@ -623,55 +623,58 @@ describe("endpoints", () => {
             { ingredient: "Pine Nuts", quantity: "1/4 cup" },
             { ingredient: "Olive Oil", quantity: "1/4 cup" },
           ]);
-          expect(recipe.tags).toEqual(['Italian', 'Pasta', 'Quick'])
-          expect(recipe.created_by).toBe("madhatter")
+          expect(recipe.tags).toEqual(["Italian", "Pasta", "Quick"]);
+          expect(recipe.created_by).toBe("madhatter");
         });
     });
-    test("400: responds with error when body missing elements", ()=> { //require elements are name, instructions, ingredients
-      const requestBody = {
-        name: "test",
-        instructions: "1.sdf 2. sfd"
-      }
-
-      return request(app)
-      .post("/api/recipes")
-      .set("x-auth-token", token)
-      .send(requestBody)
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-
-    })
-    test("201: posts successfully when request has no tags", ()=> { 
+    test("400: responds with error when body missing elements", () => {
+      //require elements are name, instructions, ingredients
       const requestBody = {
         name: "test",
         instructions: "1.sdf 2. sfd",
-        ingredients: [{id: 1, quantity: '200g'}, {id: 2, quantity: 2}]
-      }
+      };
 
       return request(app)
-      .post("/api/recipes")
-      .set("x-auth-token", token)
-      .send(requestBody)
-      .expect(201)
-    })
-    test("400: respond with error when request has invalid data types", ()=> { 
+        .post("/api/recipes")
+        .set("x-auth-token", token)
+        .send(requestBody)
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("201: posts successfully when request has no tags", () => {
       const requestBody = {
         name: "test",
         instructions: "1.sdf 2. sfd",
-        ingredients: [1,2,3,4]
-      }
+        ingredients: [
+          { id: 1, quantity: "200g" },
+          { id: 2, quantity: 2 },
+        ],
+      };
 
       return request(app)
-      .post("/api/recipes")
-      .set("x-auth-token", token)
-      .send(requestBody)
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
+        .post("/api/recipes")
+        .set("x-auth-token", token)
+        .send(requestBody)
+        .expect(201);
+    });
+    test("400: respond with error when request has invalid data types", () => {
+      const requestBody = {
+        name: "test",
+        instructions: "1.sdf 2. sfd",
+        ingredients: [1, 2, 3, 4],
+      };
+
+      return request(app)
+        .post("/api/recipes")
+        .set("x-auth-token", token)
+        .send(requestBody)
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
     test("400: responds with error when request body is empty", () => {
       return request(app)
         .post("/api/recipes")
@@ -688,7 +691,7 @@ describe("endpoints", () => {
         instructions: "1. sdf 2. sfd",
         ingredients: [{ id: 1 }],
       };
-  
+
       return request(app)
         .post("/api/recipes")
         .set("x-auth-token", token)
@@ -705,7 +708,7 @@ describe("endpoints", () => {
         ingredients: [{ id: 1, quantity: "200g" }],
         tags: ["invalidTag"],
       };
-  
+
       return request(app)
         .post("/api/recipes")
         .set("x-auth-token", token)
@@ -714,7 +717,7 @@ describe("endpoints", () => {
         .then(({ body }) => {
           expect(body.msg).toBe("Bad Request");
         });
-    })
+    });
     test("401: responds with error when trying to post recipe with invalid/missing/expired token", () => {
       const requestBody = {
         name: "test",
@@ -722,7 +725,7 @@ describe("endpoints", () => {
         ingredients: [{ id: 1, quantity: "200g" }],
         tags: [1],
       };
-  
+
       return request(app)
         .post("/api/recipes")
         .set("x-auth-token", "invalidtoken")
@@ -731,9 +734,9 @@ describe("endpoints", () => {
         .then(({ body }) => {
           expect(body.msg).toBe("Invalid Token");
         });
-    })
+    });
   });
-  describe("PATCH /recipes/:id", ()=> {
+  describe("PATCH /recipes/:id", () => {
     const login = { username: "madhatter", password: "unsafepw" };
     let token;
     beforeAll(() => {
@@ -744,397 +747,598 @@ describe("endpoints", () => {
           token = body.token;
         });
     });
-    test("200: patches and repsonds with updated recipe", ()=> {
+    test("200: patches and repsonds with updated recipe", () => {
       return request(app)
-      .patch("/api/recipes/1")
-      .set("x-auth-token", token)
-      .send({name: 'newName'})
-      .expect(200)
-      .then(({body: {recipe}}) => {
-        expect(recipe.name).toBe('newName')
-        expect(recipe).toHaveProperty("id");
+        .patch("/api/recipes/1")
+        .set("x-auth-token", token)
+        .send({ name: "newName" })
+        .expect(200)
+        .then(({ body: { recipe } }) => {
+          expect(recipe.name).toBe("newName");
+          expect(recipe).toHaveProperty("id");
           expect(recipe).toHaveProperty("description");
           expect(recipe).toHaveProperty("instructions");
           expect(recipe).toHaveProperty("created_at");
-          expect(recipe).toHaveProperty('created_by')
+          expect(recipe).toHaveProperty("created_by");
           expect(recipe).toHaveProperty("updated_at");
           expect(recipe).toHaveProperty("ingredients");
           expect(Array.isArray(recipe.ingredients)).toBe(true);
-
-      })
-    })
-    test("200: patches and repsonds with updated recipe when patching two properties at once", ()=> {
-      return request(app)
-      .patch("/api/recipes/1")
-      .set("x-auth-token", token)
-      .send({name: 'newName', instructions: 'newInstructions'})
-      .expect(200)
-      .then(({body: {recipe}}) => {
-        expect(recipe.name).toBe('newName')
-        expect(recipe.instructions).toBe('newInstructions')
-        expect(recipe).toHaveProperty("id");
-          expect(recipe).toHaveProperty("description");
-          expect(recipe).toHaveProperty("created_at");
-          expect(recipe).toHaveProperty("updated_at");
-          expect(recipe).toHaveProperty("ingredients");
-          expect(Array.isArray(recipe.ingredients)).toBe(true);
-
-      })
-    })
-    test("200: patches and repsonds with updated recipe when patching ingredients", ()=> {
-      return request(app)
-      .patch("/api/recipes/1")
-      .set("x-auth-token", token)
-      .send({ingredients: [{
-        id: 18,
-        quantity: "200g",
-      },
-      {
-        id: 19,
-        quantity: "2 cups",
-      }]})
-      .expect(200)
-      .then(({body: {recipe}}) => {
-        expect(recipe.name).toBe('Spaghetti Carbonara')
-        expect(recipe).toHaveProperty("id");
-          expect(recipe).toHaveProperty("description");
-          expect(recipe).toHaveProperty("instructions");
-          expect(recipe).toHaveProperty("created_at");
-          expect(recipe).toHaveProperty("updated_at");
-          expect(recipe).toHaveProperty("ingredients");
-          expect(recipe.ingredients).toEqual([{ ingredient: "Pasta", quantity: "200g" },
-          { ingredient: "Basil", quantity: "2 cups" }])
-
-      })
-    })
-    test("200: patches and repsonds with updated recipe when patching tags", ()=> {
-      return request(app)
-      .patch("/api/recipes/1")
-      .set("x-auth-token", token)
-      .send({tags: [1,2,3]})
-      .expect(200)
-      .then(({body: {recipe}}) => {
-        console.log(recipe)
-        expect(recipe.name).toBe('Spaghetti Carbonara')
-        expect(recipe).toHaveProperty("id");
-          expect(recipe).toHaveProperty("description");
-          expect(recipe).toHaveProperty("instructions");
-          expect(recipe).toHaveProperty("created_at");
-          expect(recipe).toHaveProperty('created_by')
-          expect(recipe).toHaveProperty("updated_at");
-          expect(recipe).toHaveProperty("ingredients");
-          expect(Array.isArray(recipe.ingredients)).toBe(true);
-          expect(recipe.tags).toEqual(['Italian', 'Pasta', 'Spicy'])
-      })
-    })
-    test("200: after a successful patch the updated at column is updated", ()=> {
-      const time = new Date().toISOString().substring(0,16)
-      return request(app)
-      .patch("/api/recipes/1")
-      .set("x-auth-token", token)
-      .send({name: 'newName'})
-      .expect(200)
-      .then(({body: {recipe}}) => {
-        const updated_at = recipe.updated_at
-        const formattedUpdated = updated_at.substring(0,16)
-        expect(formattedUpdated).toBe(time)
-      })
-    })
-    test("200: after a successful patch the updated at column is updated (tags)", ()=> {
-      const time = new Date().toISOString().substring(0,16)
-      return request(app)
-      .patch("/api/recipes/1")
-      .set("x-auth-token", token)
-      .send({tags: [1,2,3]})
-      .expect(200)
-      .then(({body: {recipe}}) => {
-        const updated_at = recipe.updated_at
-        const formattedUpdated = updated_at.substring(0,16)
-        expect(formattedUpdated).toBe(time)
-      })
-    })
-    test("200: after a successful patch the updated at column is updated (ing)", ()=> {
-      const time = new Date().toISOString().substring(0,16)
-      return request(app)
-      .patch("/api/recipes/1")
-      .set("x-auth-token", token)
-      .send({ingredients: [{
-        id: 18,
-        quantity: "200g",
-      },
-      {
-        id: 19,
-        quantity: "2 cups",
-      }]})
-      .expect(200)
-      .then(({body: {recipe}}) => {
-        const updated_at = recipe.updated_at
-        const formattedUpdated = updated_at.substring(0,16)
-        expect(formattedUpdated).toBe(time)
-      })
-    })
-    test("400: returns error when empty request body", ()=> {
-      return request(app)
-      .patch("/api/recipes/1")
-      .set("x-auth-token", token)
-      .send()
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe('Bad Request')
-      })
-    })
-    test("400: returns error when invalid patch request", ()=> {
-      return request(app)
-      .patch("/api/recipes/1")
-      .set("x-auth-token", token)
-      .send({created_by: 'me'})
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe('Bad Request')
-      })
-    })
-    test("400: returns error when missing token", ()=> {
-      return request(app)
-      .patch("/api/recipes/1")
-      .send({tags: [1,2,3]})
-      .expect(401)
-      .then(({body}) => {
-        expect(body.msg).toBe('Missing Token')
-      })
-    })
-    test("400: returns error when trying to patch a recipe not created_by the user", ()=> {
-      return request(app)
-      .patch("/api/recipes/3")
-      .set("x-auth-token", token)
-      .send({tags: [1,2,3]})
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe('You cannot update this recipe')
-      })
-    })
-    test("404: returns error when trying to patch a non existant recipe_id", ()=> {
-      return request(app)
-      .patch("/api/recipes/999")
-      .set("x-auth-token", token)
-      .send({tags: [1,2,3]})
-      .expect(404)
-      .then(({body}) => {
-        expect(body.msg).toBe('Not Found')
-      })
-    })
-    test("400: returns error when trying to patch an invalid recipe id", ()=> {
-      return request(app)
-      .patch("/api/recipes/banana")
-      .set("x-auth-token", token)
-      .send({tags: [1,2,3]})
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe('Bad Request')
-      })
-    })
-  })
-  describe("DELETE /recipes/:id", ()=> {
-    const login = { username: "madhatter", password: "unsafepw" };
-    let token;
-    beforeAll(() => {
-      return request(app)
-        .post("/api/auth/login")
-        .send(login)
-        .then(({ body }) => {
-          token = body.token;
         });
     });
-    test("204: deletes a recipe by recipe_id all everything referencing it in other tables", ()=>{
+    test("200: patches and repsonds with updated recipe when patching two properties at once", () => {
       return request(app)
-      .delete("/api/recipes/1")
-      .set("x-auth-token", token)
-      .expect(204)
-      .then((data)=>{
-        return request(app).get("/api/recipes/1").expect(404)
-      })
-      .then(()=>{
-        return db.query(`SELECT * FROM recipe_tags WHERE recipe_id = 1;`)
-      })
-      .then(({rows}) => {
-        expect(rows.length).toBe(0)
-      })
-      .then(()=>{
-        return db.query(`SELECT * FROM recipe_ingredients WHERE recipe_id = 1;`)
-      })
-      .then(({rows}) => {
-        expect(rows.length).toBe(0)
-      })
-      .then(()=>{
-        return db.query(`SELECT * FROM ratings WHERE recipe_id = 1;`)
-      })
-      .then(({rows}) => {
-        expect(rows.length).toBe(0)
-      })
-      .then(()=>{
-        return db.query(`SELECT * FROM comments WHERE recipe_id = 1;`)
-      })
-      .then(({rows}) => {
-        expect(rows.length).toBe(0)
-      })
-    })
-    test("400: returns error when invalid id", ()=> {
+        .patch("/api/recipes/1")
+        .set("x-auth-token", token)
+        .send({ name: "newName", instructions: "newInstructions" })
+        .expect(200)
+        .then(({ body: { recipe } }) => {
+          expect(recipe.name).toBe("newName");
+          expect(recipe.instructions).toBe("newInstructions");
+          expect(recipe).toHaveProperty("id");
+          expect(recipe).toHaveProperty("description");
+          expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("updated_at");
+          expect(recipe).toHaveProperty("ingredients");
+          expect(Array.isArray(recipe.ingredients)).toBe(true);
+        });
+    });
+    test("200: patches and repsonds with updated recipe when patching ingredients", () => {
       return request(app)
-      .delete("/api/recipes/banana")
-      .set("x-auth-token", token)
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
-    test("400: returns error when non existant id", ()=> {
-      return request(app)
-      .delete("/api/recipes/999")
-      .set("x-auth-token", token)
-      .expect(404)
-      .then(({body}) => {
-        expect(body.msg).toBe("Not Found")
-      })
-    })
-    test("401: returns error when missing token", ()=> {
-      return request(app)
-      .delete("/api/recipes/1")
-      .expect(401)
-      .then(({body}) => {
-        expect(body.msg).toBe("Missing Token")
-      })
-    })
-    test("401: returns error when invalid token", ()=> {
-      return request(app)
-      .delete("/api/recipes/1")
-      .set("x-auth-token", "invalid")
-      .expect(401)
-      .then(({body}) => {
-        expect(body.msg).toBe("Invalid Token")
-      })
-    })
-    test("401: returns error when valid token but unauthroized permissions", ()=> {
-      return request(app)
-      .delete("/api/recipes/4")
-      .set("x-auth-token", token)
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("You cannot update this recipe")
-      })
-    })
-  })
-  describe("GET /recipes filter by tags and ingredients", ()=>{
-    test("200: returns all recipes when given a certain ingredient query", ()=>{
-      return request(app)
-      .get("/api/recipes?ingredients=spaghetti")
-      .expect(200)
-      .then(({body: {recipes}}) => {
-        expect(recipes.length).toBe(2)
-        expect(recipes[0].name).toBe("Spaghetti Carbonara")
-        expect(recipes[1].name).toBe("Spaghetti Bolognese")
-        expect(recipes[0].id).toBe(1)
-          expect(recipes[0]).toHaveProperty("description");
-          expect(recipes[0]).toHaveProperty("instructions");
-          expect(recipes[0]).toHaveProperty("created_at");
-          expect(recipes[0]).toHaveProperty("created_by");
-          expect(recipes[0]).toHaveProperty("updated_at");
-          expect(recipes[0]).toHaveProperty("ingredients");
-          expect(Array.isArray(recipes[0].ingredients)).toBe(true);
-      })
-    })
-    test("404: returns error when given a invalid ingredient query", ()=>{
-      return request(app)
-      .get("/api/recipes?ingredients=123")
-      .expect(404)
-      .then(({body}) => {
-        expect(body.msg).toBe("Resource not Found")
-      })
-    })
-    test("200: returns empty array when given a valid ingredient but no recipes", ()=>{
-      return request(app)
-      .get("/api/recipes?ingredients=mushroom")
-      .expect(200)
-      .then(({body: {recipes}}) => {
-        expect(recipes).toEqual([])
-      })
-    })
-    test("200: returns all recipes when given a certain tag query", ()=>{
-      return request(app)
-      .get("/api/recipes?tags=quick")
-      .expect(200)
-      .then(({body: {recipes}}) => {
-        expect(recipes.length).toBe(2)
-        expect(recipes[0].name).toBe("Vegetable Stir Fry")
-        expect(recipes[1].name).toBe("Beef Tacos")
-        expect(recipes[0].id).toBe(3)
-          expect(recipes[0]).toHaveProperty("description");
-          expect(recipes[0]).toHaveProperty("instructions");
-          expect(recipes[0]).toHaveProperty("created_at");
-          expect(recipes[0]).toHaveProperty("created_by");
-          expect(recipes[0]).toHaveProperty("updated_at");
-          expect(recipes[0]).toHaveProperty("ingredients");
-          expect(Array.isArray(recipes[0].ingredients)).toBe(true);
-      })
-    })
-    test("404: returns error when given a invalid ingredient query", ()=>{
-      return request(app)
-      .get("/api/recipes?tags=123")
-      .expect(404)
-      .then(({body}) => {
-        expect(body.msg).toBe("Resource not Found")
-      })
-    })
-    test("200: returns empty array when given a valid tag but no recipes", ()=>{
-      return request(app)
-      .get("/api/recipes?tags=korean")
-      .expect(200)
-      .then(({body: {recipes}}) => {
-        expect(recipes).toEqual([])
-      })
-    })
-    
-  })
-  describe("GET ratings/id", ()=>{
-    test("200: returns array of all ratings by id and avergae rating", ()=> {
-      return request(app)
-      .get("/api/ratings/4")
-      .expect(200)
-      .then(({body}) => {
-        expect(body.ratings.length).toBe(2)
-        body.ratings.forEach(rating => {
-          expect(rating.recipe_id).toBe(4)
-          expect(rating).toHaveProperty("user_id")
-          expect(rating).toHaveProperty("rating")
-          expect(rating).toHaveProperty("created_at")
+        .patch("/api/recipes/1")
+        .set("x-auth-token", token)
+        .send({
+          ingredients: [
+            {
+              id: 18,
+              quantity: "200g",
+            },
+            {
+              id: 19,
+              quantity: "2 cups",
+            },
+          ],
         })
-        expect(body.average).toBe(4)
-      })
-    })
+        .expect(200)
+        .then(({ body: { recipe } }) => {
+          expect(recipe.name).toBe("Spaghetti Carbonara");
+          expect(recipe).toHaveProperty("id");
+          expect(recipe).toHaveProperty("description");
+          expect(recipe).toHaveProperty("instructions");
+          expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("updated_at");
+          expect(recipe).toHaveProperty("ingredients");
+          expect(recipe.ingredients).toEqual([
+            { ingredient: "Pasta", quantity: "200g" },
+            { ingredient: "Basil", quantity: "2 cups" },
+          ]);
+        });
+    });
+    test("200: patches and repsonds with updated recipe when patching tags", () => {
+      return request(app)
+        .patch("/api/recipes/1")
+        .set("x-auth-token", token)
+        .send({ tags: [1, 2, 3] })
+        .expect(200)
+        .then(({ body: { recipe } }) => {
+          console.log(recipe);
+          expect(recipe.name).toBe("Spaghetti Carbonara");
+          expect(recipe).toHaveProperty("id");
+          expect(recipe).toHaveProperty("description");
+          expect(recipe).toHaveProperty("instructions");
+          expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("created_by");
+          expect(recipe).toHaveProperty("updated_at");
+          expect(recipe).toHaveProperty("ingredients");
+          expect(Array.isArray(recipe.ingredients)).toBe(true);
+          expect(recipe.tags).toEqual(["Italian", "Pasta", "Spicy"]);
+        });
+    });
+    test("200: after a successful patch the updated at column is updated", () => {
+      const time = new Date().toISOString().substring(0, 16);
+      return request(app)
+        .patch("/api/recipes/1")
+        .set("x-auth-token", token)
+        .send({ name: "newName" })
+        .expect(200)
+        .then(({ body: { recipe } }) => {
+          const updated_at = recipe.updated_at;
+          const formattedUpdated = updated_at.substring(0, 16);
+          expect(formattedUpdated).toBe(time);
+        });
+    });
+    test("200: after a successful patch the updated at column is updated (tags)", () => {
+      const time = new Date().toISOString().substring(0, 16);
+      return request(app)
+        .patch("/api/recipes/1")
+        .set("x-auth-token", token)
+        .send({ tags: [1, 2, 3] })
+        .expect(200)
+        .then(({ body: { recipe } }) => {
+          const updated_at = recipe.updated_at;
+          const formattedUpdated = updated_at.substring(0, 16);
+          expect(formattedUpdated).toBe(time);
+        });
+    });
+    test("200: after a successful patch the updated at column is updated (ing)", () => {
+      const time = new Date().toISOString().substring(0, 16);
+      return request(app)
+        .patch("/api/recipes/1")
+        .set("x-auth-token", token)
+        .send({
+          ingredients: [
+            {
+              id: 18,
+              quantity: "200g",
+            },
+            {
+              id: 19,
+              quantity: "2 cups",
+            },
+          ],
+        })
+        .expect(200)
+        .then(({ body: { recipe } }) => {
+          const updated_at = recipe.updated_at;
+          const formattedUpdated = updated_at.substring(0, 16);
+          expect(formattedUpdated).toBe(time);
+        });
+    });
+    test("400: returns error when empty request body", () => {
+      return request(app)
+        .patch("/api/recipes/1")
+        .set("x-auth-token", token)
+        .send()
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("400: returns error when invalid patch request", () => {
+      return request(app)
+        .patch("/api/recipes/1")
+        .set("x-auth-token", token)
+        .send({ created_by: "me" })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("400: returns error when missing token", () => {
+      return request(app)
+        .patch("/api/recipes/1")
+        .send({ tags: [1, 2, 3] })
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+    test("400: returns error when trying to patch a recipe not created_by the user", () => {
+      return request(app)
+        .patch("/api/recipes/3")
+        .set("x-auth-token", token)
+        .send({ tags: [1, 2, 3] })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("You cannot update this recipe");
+        });
+    });
+    test("404: returns error when trying to patch a non existant recipe_id", () => {
+      return request(app)
+        .patch("/api/recipes/999")
+        .set("x-auth-token", token)
+        .send({ tags: [1, 2, 3] })
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Not Found");
+        });
+    });
+    test("400: returns error when trying to patch an invalid recipe id", () => {
+      return request(app)
+        .patch("/api/recipes/banana")
+        .set("x-auth-token", token)
+        .send({ tags: [1, 2, 3] })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+  });
+  describe("DELETE /recipes/:id", () => {
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("204: deletes a recipe by recipe_id all everything referencing it in other tables", () => {
+      return request(app)
+        .delete("/api/recipes/1")
+        .set("x-auth-token", token)
+        .expect(204)
+        .then((data) => {
+          return request(app).get("/api/recipes/1").expect(404);
+        })
+        .then(() => {
+          return db.query(`SELECT * FROM recipe_tags WHERE recipe_id = 1;`);
+        })
+        .then(({ rows }) => {
+          expect(rows.length).toBe(0);
+        })
+        .then(() => {
+          return db.query(
+            `SELECT * FROM recipe_ingredients WHERE recipe_id = 1;`
+          );
+        })
+        .then(({ rows }) => {
+          expect(rows.length).toBe(0);
+        })
+        .then(() => {
+          return db.query(`SELECT * FROM ratings WHERE recipe_id = 1;`);
+        })
+        .then(({ rows }) => {
+          expect(rows.length).toBe(0);
+        })
+        .then(() => {
+          return db.query(`SELECT * FROM comments WHERE recipe_id = 1;`);
+        })
+        .then(({ rows }) => {
+          expect(rows.length).toBe(0);
+        });
+    });
+    test("400: returns error when invalid id", () => {
+      return request(app)
+        .delete("/api/recipes/banana")
+        .set("x-auth-token", token)
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("400: returns error when non existant id", () => {
+      return request(app)
+        .delete("/api/recipes/999")
+        .set("x-auth-token", token)
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Not Found");
+        });
+    });
+    test("401: returns error when missing token", () => {
+      return request(app)
+        .delete("/api/recipes/1")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+    test("401: returns error when invalid token", () => {
+      return request(app)
+        .delete("/api/recipes/1")
+        .set("x-auth-token", "invalid")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
+    test("401: returns error when valid token but unauthroized permissions", () => {
+      return request(app)
+        .delete("/api/recipes/4")
+        .set("x-auth-token", token)
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("You cannot update this recipe");
+        });
+    });
+  });
+  describe("GET /recipes filter by tags and ingredients", () => {
+    test("200: returns all recipes when given a certain ingredient query", () => {
+      return request(app)
+        .get("/api/recipes?ingredients=spaghetti")
+        .expect(200)
+        .then(({ body: { recipes } }) => {
+          expect(recipes.length).toBe(2);
+          expect(recipes[0].name).toBe("Spaghetti Carbonara");
+          expect(recipes[1].name).toBe("Spaghetti Bolognese");
+          expect(recipes[0].id).toBe(1);
+          expect(recipes[0]).toHaveProperty("description");
+          expect(recipes[0]).toHaveProperty("instructions");
+          expect(recipes[0]).toHaveProperty("created_at");
+          expect(recipes[0]).toHaveProperty("created_by");
+          expect(recipes[0]).toHaveProperty("updated_at");
+          expect(recipes[0]).toHaveProperty("ingredients");
+          expect(Array.isArray(recipes[0].ingredients)).toBe(true);
+        });
+    });
+    test("404: returns error when given a invalid ingredient query", () => {
+      return request(app)
+        .get("/api/recipes?ingredients=123")
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Resource not Found");
+        });
+    });
+    test("200: returns empty array when given a valid ingredient but no recipes", () => {
+      return request(app)
+        .get("/api/recipes?ingredients=mushroom")
+        .expect(200)
+        .then(({ body: { recipes } }) => {
+          expect(recipes).toEqual([]);
+        });
+    });
+    test("200: returns all recipes when given a certain tag query", () => {
+      return request(app)
+        .get("/api/recipes?tags=quick")
+        .expect(200)
+        .then(({ body: { recipes } }) => {
+          expect(recipes.length).toBe(2);
+          expect(recipes[0].name).toBe("Vegetable Stir Fry");
+          expect(recipes[1].name).toBe("Beef Tacos");
+          expect(recipes[0].id).toBe(3);
+          expect(recipes[0]).toHaveProperty("description");
+          expect(recipes[0]).toHaveProperty("instructions");
+          expect(recipes[0]).toHaveProperty("created_at");
+          expect(recipes[0]).toHaveProperty("created_by");
+          expect(recipes[0]).toHaveProperty("updated_at");
+          expect(recipes[0]).toHaveProperty("ingredients");
+          expect(Array.isArray(recipes[0].ingredients)).toBe(true);
+        });
+    });
+    test("404: returns error when given a invalid ingredient query", () => {
+      return request(app)
+        .get("/api/recipes?tags=123")
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Resource not Found");
+        });
+    });
+    test("200: returns empty array when given a valid tag but no recipes", () => {
+      return request(app)
+        .get("/api/recipes?tags=korean")
+        .expect(200)
+        .then(({ body: { recipes } }) => {
+          expect(recipes).toEqual([]);
+        });
+    });
+  });
+  describe("GET ratings/id", () => {
+    test("200: returns array of all ratings by id and avergae rating", () => {
+      return request(app)
+        .get("/api/ratings/4")
+        .expect(200)
+        .then(({ body }) => {
+          expect(body.ratings.length).toBe(2);
+          body.ratings.forEach((rating) => {
+            expect(rating.recipe_id).toBe(4);
+            expect(rating).toHaveProperty("user_id");
+            expect(rating).toHaveProperty("rating");
+            expect(rating).toHaveProperty("created_at");
+          });
+          expect(body.average).toBe(4);
+        });
+    });
+    test("404: returns error when given non-existant id", () => {
+      return request(app)
+        .get("/api/ratings/999")
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Recipe not Found");
+        });
+    });
+    test("400: returns error when given invalid id", () => {
+      return request(app)
+        .get("/api/ratings/banana")
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("200: returns empty array when existant id but no ratings associated", () => {
+      return request(app)
+        .get("/api/ratings/5")
+        .expect(200)
+        .then(({ body }) => {
+          expect(body.ratings).toEqual([]);
+        });
+    });
+  });
+  describe("POST ratings/id", () => {
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("201: returns newly posted rating and adds to db", () => {
+      const time = new Date().toISOString().substring(0, 16);
+      const requestBody = { rating: 5 };
+      return request(app)
+        .post("/api/ratings/2")
+        .send(requestBody)
+        .set("x-auth-token", token)
+        .expect(201)
+        .then(({ body: { rating } }) => {
+          expect(rating.recipe_id).toBe(2);
+          expect(rating.user_id).toBe(1);
+          expect(rating.rating).toBe(5);
+          expect(rating.created_at.substring(0, 16)).toBe(time);
+        })
+        .then(() => {
+          return request(app).get("/api/ratings/2").expect(200);
+        })
+        .then(({ body }) => {
+          expect(body.ratings.length).toBe(2);
+          expect(body.average).toBe(4.5);
+        });
+    });
+    test("400: responds with error when body missing elements", () => {
+      return request(app)
+        .post("/api/ratings/2")
+        .set("x-auth-token", token)
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("400: responds with error when body has invalid datatype", () => {
+      return request(app)
+        .post("/api/ratings/2")
+        .set("x-auth-token", token)
+        .send({ rating: "hello" })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("404: responds with error when non-existant id", () => {
+      return request(app)
+        .post("/api/ratings/999")
+        .set("x-auth-token", token)
+        .send({ rating: 4 })
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Recipe not Found");
+        });
+    });
+    test("400: responds with error when invalid id", () => {
+      return request(app)
+        .post("/api/ratings/banana")
+        .set("x-auth-token", token)
+        .send({ rating: 4 })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("401: responds with error trying to post with invalid/missing/expired token", () => {
+      return request(app)
+        .post("/api/ratings/1")
+        .set("x-auth-token", "invalidToken")
+        .send({ rating: 4 })
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
+    test("409: responds with error trying to post a rating to a recipe_id the user already has a rating for", () => {
+      return request(app)
+        .post("/api/ratings/1")
+        .set("x-auth-token", token)
+        .send({ rating: 4 })
+        .expect(409)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Already Exists");
+        });
+    });
+  });
+  describe("DELETE ratings/id", () => {
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("204: deletes rating by id from logged in user", () => {
+      return request(app)
+        .delete("/api/ratings/1")
+        .set("x-auth-token", token)
+        .expect(204)
+        .then(() => {
+          return request(app).get("/api/ratings/1").expect(200);
+        })
+        .then(({ body: { ratings } }) => {
+          expect(ratings).toEqual([]);
+        });
+    });
+    test("404: returns error when attempting to delete a non existant rating from a valid recipe_id", () => {
+      return request(app)
+        .delete("/api/ratings/5")
+        .set("x-auth-token", token)
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Rating not Found");
+        });
+    });
+    test("404: returns error when attempting to delete a non existant rating from a non-existant recipe_id", () => {
+      return request(app)
+        .delete("/api/ratings/999")
+        .set("x-auth-token", token)
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Recipe not Found");
+        });
+    });
+    test("400: returns error when attempting to delete a non existant rating from a invalid recipe_id", () => {
+      return request(app)
+        .delete("/api/ratings/banana")
+        .set("x-auth-token", token)
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("401: returns error when attempting to delete a rating with an invalid/missing/expired token", () => {
+      return request(app)
+        .delete("/api/ratings/1")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+  });
+  describe("GET comments/id", () => {
+    test("200: returns an array of all comments by recipe_id", () => {
+      return request(app)
+        .get("/api/comments/3")
+        .expect(200)
+        .then(({ body: { comments } }) => {
+          expect(comments.length).toBe(2);
+          comments.forEach((comment) => {
+            expect(comment.recipe_id).toBe(3);
+            expect(comment).toHaveProperty("user_id");
+            expect(comment).toHaveProperty("body");
+            expect(comment).toHaveProperty("created_at");
+          });
+        });
+    });
     test("404: returns error when given non-existant id", ()=>{
       return request(app)
-      .get("/api/ratings/999")
+      .get("/api/comments/999")
       .expect(404)
       .then(({body}) => {
         expect(body.msg).toBe("Recipe not Found")
       })
     })
-    test("400: returns error when given invalid id", ()=>{
+    test("400: returns error when given invalid id", () => {
       return request(app)
-      .get("/api/ratings/banana")
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
-    test("200: returns empty array when existant id but no ratings associated", ()=>{
+        .get("/api/comments/banana")
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("200: returns empty array when existant id but no ratings associated", () => {
       return request(app)
-      .get("/api/ratings/5")
-      .expect(200)
-      .then(({body})=>{
-        expect(body.ratings).toEqual([])
-      })
-    })
-  })
-  describe("POST ratings/id", ()=>{
+        .get("/api/comments/5")
+        .expect(200)
+        .then(({ body }) => {
+          console.log(body)
+          expect(body.comments).toEqual([]);
+        });
+    });
+  });
+  describe.only("POST commnets/id", ()=>{
     const login = { username: "madhatter", password: "unsafepw" };
     let token;
     beforeAll(() => {
@@ -1145,148 +1349,25 @@ describe("endpoints", () => {
           token = body.token;
         });
     });
-    test("201: returns newly posted rating and adds to db", ()=>{
-      const time = new Date().toISOString().substring(0,16)
-      const requestBody = {rating: 5}
+    test("201: returns newly posted comment and adds to db", ()=>{
+      const time = new Date().toISOString().substring(0, 16);
+      const requestBody = {body: "This recipe was great!"}
       return request(app)
-      .post("/api/ratings/2")
+      .post("/api/comments/2")
       .send(requestBody)
       .set("x-auth-token", token)
       .expect(201)
-      .then(({body: {rating}}) => {
-        expect(rating.recipe_id).toBe(2)
-        expect(rating.user_id).toBe(1)
-        expect(rating.rating).toBe(5)
-        expect(rating.created_at.substring(0,16)).toBe(time)
+      .then(({body: {comment}}) => {
+        expect(comment.recipe_id).toBe(2)
+        expect(comment.user_id).toBe(1)
+        expect(comment.body).toBe(requestBody.body)
+        expect(comment.created_at.substring(0, 16)).toBe(time);
       })
       .then(()=>{
-        return request(app)
-        .get("/api/ratings/2")
-        .expect(200)
+        return request(app).get("/api/comments/2").expect(200)
       })
-      .then(({body}) => {
-        expect(body.ratings.length).toBe(2)
-        expect(body.average).toBe(4.5)
-      })
-    })
-    test("400: responds with error when body missing elements", ()=>{
-      return request(app)
-      .post("/api/ratings/2")
-      .set("x-auth-token", token)
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
-    test("400: responds with error when body has invalid datatype", ()=>{
-      return request(app)
-      .post("/api/ratings/2")
-      .set("x-auth-token", token)
-      .send({rating: "hello"})
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
-    test("404: responds with error when non-existant id", ()=>{
-      return request(app)
-      .post("/api/ratings/999")
-      .set("x-auth-token", token)
-      .send({rating: 4})
-      .expect(404)
-      .then(({body}) => {
-        expect(body.msg).toBe("Recipe not Found")
-      })
-    })
-    test("400: responds with error when invalid id", ()=>{
-      return request(app)
-      .post("/api/ratings/banana")
-      .set("x-auth-token", token)
-      .send({rating: 4})
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
-    test("401: responds with error trying to post with invalid/missing/expired token", ()=>{
-      return request(app)
-      .post("/api/ratings/1")
-      .set("x-auth-token", 'invalidToken')
-      .send({rating: 4})
-      .expect(401)
-      .then(({body}) => {
-        expect(body.msg).toBe("Invalid Token")
-      })
-    })
-    test("409: responds with error trying to post a rating to a recipe_id the user already has a rating for", ()=>{
-      return request(app)
-      .post("/api/ratings/1")
-      .set("x-auth-token", token)
-      .send({rating: 4})
-      .expect(409)
-      .then(({body}) => {
-        expect(body.msg).toBe("Already Exists")
-      })
-    })
-  })
-  describe.only("DELETE ratings/id", ()=>{
-    const login = { username: "madhatter", password: "unsafepw" };
-    let token;
-    beforeAll(() => {
-      return request(app)
-        .post("/api/auth/login")
-        .send(login)
-        .then(({ body }) => {
-          token = body.token;
-        });
-    });
-    test("204: deletes rating by id from logged in user", ()=>{
-      return request(app)
-      .delete("/api/ratings/1")
-      .set("x-auth-token", token)
-      .expect(204)
-      .then(()=>{
-        return request(app)
-        .get("/api/ratings/1")
-        .expect(200)
-      })
-      .then(({body: {ratings}}) => {
-        expect(ratings).toEqual([])
-      })
-    })
-    test("404: returns error when attempting to delete a non existant rating from a valid recipe_id", ()=>{
-      return request(app)
-      .delete("/api/ratings/5")
-      .set("x-auth-token", token)
-      .expect(404)
-      .then(({body}) => {
-        expect(body.msg).toBe("Rating not Found")
-      })
-    })
-    test("404: returns error when attempting to delete a non existant rating from a non-existant recipe_id", ()=>{
-      return request(app)
-      .delete("/api/ratings/999")
-      .set("x-auth-token", token)
-      .expect(404)
-      .then(({body}) => {
-        expect(body.msg).toBe("Recipe not Found")
-      })
-    })
-    test("400: returns error when attempting to delete a non existant rating from a invalid recipe_id", ()=>{
-      return request(app)
-      .delete("/api/ratings/banana")
-      .set("x-auth-token", token)
-      .expect(400)
-      .then(({body}) => {
-        expect(body.msg).toBe("Bad Request")
-      })
-    })
-    test("401: returns error when attempting to delete a rating with an invalid/missing/expired token", ()=>{
-      return request(app)
-      .delete("/api/ratings/1")
-      .expect(401)
-      .then(({body}) => {
-        expect(body.msg).toBe("Missing Token")
+      .then(({body:{comments}}) => {
+        expect(comments.length).toBe(2)
       })
     })
   })
