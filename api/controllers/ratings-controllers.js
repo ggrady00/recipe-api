@@ -1,8 +1,12 @@
-const { selectRatingsByID, insertRatingByID } = require("../models/ratings-models")
+const { selectRatingsByID, insertRatingByID, removeRatingByID } = require("../models/ratings-models")
+const { checkExists, selectRecipeByID } = require("../models/recipes-models")
 
 exports.getRatingsByID = (req, res, next) => {
     const {id} = req.params
-    selectRatingsByID(id)
+    selectRecipeByID(id)
+    .then((data)=>{
+        return selectRatingsByID(id)
+    })
     .then(ratings => {
         res.status(200).send(ratings)
     })
@@ -21,6 +25,25 @@ exports.postRatingByID = (req, res, next) => {
     })
     .then((rating) => {
         res.status(201).send({rating})
+    })
+    .catch(next)
+}
+
+exports.deleteRatingByID = (req, res, next) => {
+    const {id} = req.params
+    const user_id = req.user_id
+    selectRecipeByID(id)
+    .then(()=>{
+
+        return selectRatingsByID(id)
+    })
+    .then(({ratings})=>{
+        const users = ratings.map(rating => rating.user_id)
+        if(!users.includes(user_id)) return res.status(404).send({msg: 'Rating not Found'})
+        return removeRatingByID(id, user_id)
+    })
+    .then(()=>{
+        res.status(204).send()
     })
     .catch(next)
 }

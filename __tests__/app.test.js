@@ -13,6 +13,7 @@ const {
   recipeTagsData,
   recipeIngredientsData,
 } = require("../db/data/test-data/index");
+const ratings = require("../db/data/test-data/ratings");
 
 beforeEach(() => {
   return seed({
@@ -1124,8 +1125,16 @@ describe("endpoints", () => {
         expect(body.msg).toBe("Bad Request")
       })
     })
+    test("200: returns empty array when existant id but no ratings associated", ()=>{
+      return request(app)
+      .get("/api/ratings/5")
+      .expect(200)
+      .then(({body})=>{
+        expect(body.ratings).toEqual([])
+      })
+    })
   })
-  describe.only("POST ratings/id", ()=>{
+  describe("POST ratings/id", ()=>{
     const login = { username: "madhatter", password: "unsafepw" };
     let token;
     beforeAll(() => {
@@ -1217,6 +1226,67 @@ describe("endpoints", () => {
       .expect(409)
       .then(({body}) => {
         expect(body.msg).toBe("Already Exists")
+      })
+    })
+  })
+  describe.only("DELETE ratings/id", ()=>{
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("204: deletes rating by id from logged in user", ()=>{
+      return request(app)
+      .delete("/api/ratings/1")
+      .set("x-auth-token", token)
+      .expect(204)
+      .then(()=>{
+        return request(app)
+        .get("/api/ratings/1")
+        .expect(200)
+      })
+      .then(({body: {ratings}}) => {
+        expect(ratings).toEqual([])
+      })
+    })
+    test("404: returns error when attempting to delete a non existant rating from a valid recipe_id", ()=>{
+      return request(app)
+      .delete("/api/ratings/5")
+      .set("x-auth-token", token)
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Rating not Found")
+      })
+    })
+    test("404: returns error when attempting to delete a non existant rating from a non-existant recipe_id", ()=>{
+      return request(app)
+      .delete("/api/ratings/999")
+      .set("x-auth-token", token)
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Recipe not Found")
+      })
+    })
+    test("400: returns error when attempting to delete a non existant rating from a invalid recipe_id", ()=>{
+      return request(app)
+      .delete("/api/ratings/banana")
+      .set("x-auth-token", token)
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("401: returns error when attempting to delete a rating with an invalid/missing/expired token", ()=>{
+      return request(app)
+      .delete("/api/ratings/1")
+      .expect(401)
+      .then(({body}) => {
+        expect(body.msg).toBe("Missing Token")
       })
     })
   })

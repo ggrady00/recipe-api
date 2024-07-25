@@ -5,7 +5,7 @@ exports.selectRatingsByID = (id) => {
                       WHERE recipe_id = $1;`
     return db.query(queryStr, [id])
     .then(({rows}) => {
-        if(!rows.length) return Promise.reject({status:404, msg: "Recipe not Found"})
+        if(!rows.length) return {ratings: []}
         const average = rows.map(rating => rating.rating).reduce((a,b) => a+b) / rows.length
         return {ratings: rows, average}
     })
@@ -19,4 +19,11 @@ exports.insertRatingByID = (id,user_id,rating) => {
     .then(({rows}) => {
         return rows[0]
     })
+}
+
+exports.removeRatingByID = (id, user_id) => {
+    const queryStr = `DELETE FROM ratings
+                      WHERE recipe_id = $1
+                      AND user_id = $2`
+    return db.query(queryStr, [id, user_id])
 }
