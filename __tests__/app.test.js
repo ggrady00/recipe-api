@@ -1312,14 +1312,14 @@ describe("endpoints", () => {
           });
         });
     });
-    test("404: returns error when given non-existant id", ()=>{
+    test("404: returns error when given non-existant id", () => {
       return request(app)
-      .get("/api/comments/999")
-      .expect(404)
-      .then(({body}) => {
-        expect(body.msg).toBe("Recipe not Found")
-      })
-    })
+        .get("/api/comments/999")
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Recipe not Found");
+        });
+    });
     test("400: returns error when given invalid id", () => {
       return request(app)
         .get("/api/comments/banana")
@@ -1333,12 +1333,12 @@ describe("endpoints", () => {
         .get("/api/comments/5")
         .expect(200)
         .then(({ body }) => {
-          console.log(body)
+          console.log(body);
           expect(body.comments).toEqual([]);
         });
     });
   });
-  describe.only("POST commnets/id", ()=>{
+  describe("POST commnets/id", () => {
     const login = { username: "madhatter", password: "unsafepw" };
     let token;
     beforeAll(() => {
@@ -1349,25 +1349,123 @@ describe("endpoints", () => {
           token = body.token;
         });
     });
-    test("201: returns newly posted comment and adds to db", ()=>{
+    test("201: returns newly posted comment and adds to db", () => {
       const time = new Date().toISOString().substring(0, 16);
-      const requestBody = {body: "This recipe was great!"}
+      const requestBody = { body: "This recipe was great!" };
       return request(app)
-      .post("/api/comments/2")
-      .send(requestBody)
+        .post("/api/comments/2")
+        .send(requestBody)
+        .set("x-auth-token", token)
+        .expect(201)
+        .then(({ body: { comment } }) => {
+          expect(comment.recipe_id).toBe(2);
+          expect(comment.user_id).toBe(1);
+          expect(comment.body).toBe(requestBody.body);
+          expect(comment.created_at.substring(0, 16)).toBe(time);
+        })
+        .then(() => {
+          return request(app).get("/api/comments/2").expect(200);
+        })
+        .then(({ body: { comments } }) => {
+          expect(comments.length).toBe(2);
+        });
+    });
+    test("400: responds with error when body missing elements", () => {
+      return request(app)
+        .post("/api/comments/2")
+        .set("x-auth-token", token)
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("404: responds with error when given an non-existant id", () => {
+      return request(app)
+        .post("/api/comments/999")
+        .set("x-auth-token", token)
+        .send({ body: "nice!" })
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Recipe not Found");
+        });
+    });
+    test("400: responds with error when given an invalid id", () => {
+      return request(app)
+        .post("/api/comments/banana")
+        .set("x-auth-token", token)
+        .send({ body: "nice!" })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("401: responds with error trying to post with invalid/missing/expired token", () => {
+      return request(app)
+        .post("/api/comments/1")
+        .set("x-auth-token", "invalidToken")
+        .send({ body: "nice!" })
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
+  });
+  describe.only("DELETE comments/id", ()=>{
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("204: deletes comment from logged in user by comment id", ()=>{
+      return request(app)
+      .delete("/api/comments/1")
       .set("x-auth-token", token)
-      .expect(201)
-      .then(({body: {comment}}) => {
-        expect(comment.recipe_id).toBe(2)
-        expect(comment.user_id).toBe(1)
-        expect(comment.body).toBe(requestBody.body)
-        expect(comment.created_at.substring(0, 16)).toBe(time);
-      })
+      .expect(204)
       .then(()=>{
-        return request(app).get("/api/comments/2").expect(200)
+        return request(app).get("/api/comments/1").expect(200);
       })
       .then(({body:{comments}}) => {
-        expect(comments.length).toBe(2)
+        expect(comments).toEqual([])
+      })
+    })
+    test("404: returns error when using non-existant id", ()=>{
+      return request(app)
+      .delete("/api/comments/999")
+      .set("x-auth-token", token)
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Comment not Found")
+      })
+    })
+    test("404: returns error when using invalid id", ()=>{
+      return request(app)
+      .delete("/api/comments/banana")
+      .set("x-auth-token", token)
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("401: returns error when attempting to delete a rating with an invalid/missing/expired token", () => {
+      return request(app)
+        .delete("/api/comments/1")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+    test("401: returns error when attempting to delete a comment not belonging to logged in user", ()=>{
+      return request(app)
+      .delete("/api/comments/2")
+      .set("x-auth-token", token)
+      .expect(401)
+      .then(({body}) => {
+        expect(body.msg).toBe("You cannot delete this comment")
       })
     })
   })

@@ -13,6 +13,7 @@ exports.selectRatingsByID = (id) => {
 }
 
 exports.insertRatingByID = (id,user_id,rating) => {
+    console.log(id, user_id, rating)
     const queryStr = `INSERT INTO ratings (recipe_id, user_id, rating)
                       VALUES ($1, $2, $3) RETURNING *;`
     return db.query(queryStr, [id, user_id, rating])
