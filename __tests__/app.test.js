@@ -820,7 +820,6 @@ describe("endpoints", () => {
         .send({ tags: [1, 2, 3] })
         .expect(200)
         .then(({ body: { recipe } }) => {
-          console.log(recipe);
           expect(recipe.name).toBe("Spaghetti Carbonara");
           expect(recipe).toHaveProperty("id");
           expect(recipe).toHaveProperty("description");
@@ -1333,7 +1332,6 @@ describe("endpoints", () => {
         .get("/api/comments/5")
         .expect(200)
         .then(({ body }) => {
-          console.log(body);
           expect(body.comments).toEqual([]);
         });
     });
@@ -1410,7 +1408,7 @@ describe("endpoints", () => {
         });
     });
   });
-  describe.only("DELETE comments/id", ()=>{
+  describe("DELETE comments/id", ()=>{
     const login = { username: "madhatter", password: "unsafepw" };
     let token;
     beforeAll(() => {

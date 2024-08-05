@@ -11,7 +11,6 @@ exports.selectCommentsByID = (id) => {
 }
 
 exports.insertCommentByID = (id, user_id, body) => {
-    console.log(id, user_id, body)
     const queryStr = `INSERT INTO comments (recipe_id, user_id, body)
                       VALUES ($1, $2, $3)
                       RETURNING *`

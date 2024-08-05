@@ -3,14 +3,12 @@ const db = require("../../db/connection");
 const { insertTag } = require("./tags-models");
 
 exports.selectAllRecipes = (id) => {
-  console.log(id)
   let queryStr = `SELECT * FROM recipes`;
   if(id == 'none') return []
   if(id) {
     queryStr += ` WHERE id IN %L`
     queryStr = format(queryStr, [id])
   }
-  console.log(queryStr)
   return db.query(queryStr).then(({ rows }) => {
     const recipeWithIngredients = rows.map((recipe) => {
       return this.selectIngredientsByID(recipe.id)
