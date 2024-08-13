@@ -25,7 +25,7 @@ exports.registerUser = (username, email, password) => {
     .then((hashedPassword) => {
       const queryStr = `INSERT INTO users (username, email, password)
                           VALUES ($1, $2, $3)
-                          RETURNING *;`;
+                          RETURNING id, username, email;`;
       return db.query(queryStr, [username, email, hashedPassword]);
     })
     .then(({ rows }) => {

@@ -10,7 +10,10 @@ exports.postNewUser = (req, res, next) => {
   const { username, email, password } = req.body;
   registerUser(username, email, password)
     .then((newUser) => {
-      res.status(201).send({ token: "token", user: newUser });
+      const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+      res.status(201).send({ token: token, user: newUser });
     })
     .catch(next);
 };
@@ -22,7 +25,7 @@ exports.postLoginIn = (req, res, next) => {
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
-      res.status(200).send({ token: token, user });
+      res.status(200).send({ token: token, user: {username: user.username, email: user.email} });
     })
     .catch(next);
 };

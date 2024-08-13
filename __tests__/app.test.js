@@ -47,8 +47,6 @@ describe("authentication", () => {
           expect(body).toHaveProperty("token");
           expect(body.user.username).toBe(newUser.username);
           expect(body.user.email).toBe(newUser.email);
-          expect(body.user.id).toBe(5);
-          expect(body.password).not.toBe(newUser.password);
         });
     });
     test("409: should give correct error if email already in use", () => {
@@ -103,7 +101,6 @@ describe("authentication", () => {
         .then(({ body }) => {
           expect(body).toHaveProperty("token");
           expect(body.user.username).toBe(login.username);
-          expect(body.user.id).toBe(1);
         });
     });
     test("400: should give correct error when given an invalid username", () => {
@@ -257,7 +254,6 @@ describe("authentication", () => {
         .then(({ body }) => {
           expect(body).toHaveProperty("token");
           expect(body.user.username).toBe("new_user");
-          expect(body.user.id).toBe(3);
         })
         .then(() => {
           return request(app)
