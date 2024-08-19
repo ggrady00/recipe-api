@@ -1,6 +1,6 @@
 # Recipe API
 
-This is a RESTful API backend for a recipe management website. It includes features such as creating, updating and deleting recipes as well as searching for recipes by ingredients or tags.
+This is a RESTful API backend for a recipe management website. It includes features such as creating, updating and deleting recipes as well as searching for recipes by ingredients or tags. The API is available online at https://recipe-api-kz9o.onrender.com.
 
 ## Contents
 1. [Features](#features)
