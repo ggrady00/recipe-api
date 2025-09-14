@@ -1463,4 +1463,20 @@ describe("endpoints", () => {
       })
     })
   })
+  describe("GET ratings", ()=>{
+    test("200: returns array of all recipes with ratings and averages", ()=>{
+      return request(app)
+      .get("/api/ratings")
+      .expect(200)
+      .then(({body}) =>{
+        console.log(body.ratings[0])
+        expect(body.ratings.length).toBe(4)
+        body.ratings.forEach((recipe) => {
+          expect(recipe).toHaveProperty("id");
+          expect(recipe).toHaveProperty("ratings");
+          expect(recipe).toHaveProperty("average");
+        });
+      })
+    })
+  })
 });

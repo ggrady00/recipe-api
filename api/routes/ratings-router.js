@@ -1,4 +1,4 @@
-const { getRatingsByID, postRatingByID, deleteRatingByID } = require("../controllers/ratings-controllers")
+const { getRatingsByID, postRatingByID, deleteRatingByID, getRatings } = require("../controllers/ratings-controllers")
 const { authenticateToken } = require("../middleware/auth")
 
 const ratingsRouter = require("express").Router()
@@ -8,6 +8,10 @@ ratingsRouter
 .get(getRatingsByID)
 .post(authenticateToken, postRatingByID)
 .delete(authenticateToken, deleteRatingByID)
+
+ratingsRouter
+.route("/")
+.get(getRatings)
 
 
 module.exports = ratingsRouter

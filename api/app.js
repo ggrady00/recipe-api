@@ -1,3 +1,4 @@
+const cors = require("cors")
 const express = require("express")
 const {handleCustomErrors, handlePsqlErrors, handle404Errors} = require("./errors")
 
@@ -5,6 +6,7 @@ const apiRouter = require("../api/routes/api-router")
 
 const app = express()
 app.use(express.json())
+app.use(cors())
 
 app.get("/", ((req, res) => {return res.status(200).send("Recipe API")}))
 

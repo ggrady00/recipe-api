@@ -1,5 +1,6 @@
 const { selectRatingsByID, insertRatingByID, removeRatingByID } = require("../models/ratings-models")
-const { checkExists, selectRecipeByID } = require("../models/recipes-models")
+const { checkExists, selectRecipeByID, selectAllRecipes } = require("../models/recipes-models")
+const { getRecipes } = require("./recipes-controllers")
 
 exports.getRatingsByID = (req, res, next) => {
     const {id} = req.params
@@ -46,4 +47,31 @@ exports.deleteRatingByID = (req, res, next) => {
         res.status(204).send()
     })
     .catch(next)
+}
+
+exports.getRatings = (req, res, next) => {
+    selectAllRecipes()
+    .then((body) => {
+        const ids = body.map(recipe => recipe.id)
+        const promises = []
+        ids.forEach(id => {
+            promises.push(selectRatingsByID(id))
+        })
+        return Promise.all(promises)
+    })
+    .then(recipes => {
+        const ratings = recipes.map(recipe => {
+            const id = recipe.ratings && recipe.ratings[0] ? recipe.ratings[0].id : null;
+            return {
+                ...recipe,
+                id: id
+            };
+        });
+        
+        const filtered = ratings.filter(recipe => recipe.id)
+        return filtered
+    })
+    .then(ratings => {
+        res.status(200).send({ratings})
+    })
 }
