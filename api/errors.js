@@ -8,10 +8,16 @@ exports.handleCustomErrors = (err, req, res, next) => {
 }
 
 exports.handlePsqlErrors = (err, req, res, next) => {
-    console.log(err)
-    if (err.code == '23505') {
+    if (err.code == '23505' && err.constraint == 'users_username_key'){
+        res.status(409).send({msg: 'Username Already Exists'})
+    } 
+    else if (err.code == '23505' && err.constraint == 'users_email_key') {
+        res.status(409).send({msg: 'Email Already Exists'})
+    }
+    else if (err.code == '23505' ) {
         res.status(409).send({msg: 'Already Exists'})
-    } else if (err.code == '23502' || err.code == '22P02'){
+    }
+    else if (err.code == '23502' || err.code == '22P02'){
         res.status(400).send({msg: 'Bad Request'})
     } else if (err.code == '23503'){
         res.status(404).send({msg: 'Recipe not Found'})
