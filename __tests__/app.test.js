@@ -1476,7 +1476,7 @@ describe("endpoints", () => {
       .get("/api/ratings")
       .expect(200)
       .then(({body}) =>{
-        console.log(body.ratings[0])
+        // console.log(body.ratings[0])
         expect(body.ratings.length).toBe(4)
         body.ratings.forEach((recipe) => {
           expect(recipe).toHaveProperty("id");

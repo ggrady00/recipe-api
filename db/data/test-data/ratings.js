@@ -18,15 +18,15 @@ module.exports = [
         created_at: '2024-07-03T11:30:00'
     },
     {
+        recipe_id: 3,  
+        user_id: 1,    
+        rating: 4,
+    },
+    {
         recipe_id: 4,
         user_id: 1,    
         rating: 5,
         created_at: '2024-07-03T11:45:00'
-    },
-    {
-        recipe_id: 3,  
-        user_id: 1,    
-        rating: 4,
     },
     {
         recipe_id: 4,  

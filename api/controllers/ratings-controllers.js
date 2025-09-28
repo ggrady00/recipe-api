@@ -61,7 +61,7 @@ exports.getRatings = (req, res, next) => {
     })
     .then(recipes => {
         const ratings = recipes.map(recipe => {
-            const id = recipe.ratings && recipe.ratings[0] ? recipe.ratings[0].id : null;
+            const id = recipe.ratings && recipe.ratings[0] ? recipe.ratings[0].recipe_id : null;
             return {
                 ...recipe,
                 id: id
