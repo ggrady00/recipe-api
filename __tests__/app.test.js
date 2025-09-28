@@ -47,9 +47,11 @@ describe("authentication", () => {
           expect(body).toHaveProperty("token");
           expect(body.user.username).toBe(newUser.username);
           expect(body.user.email).toBe(newUser.email);
+          expect(body.user.id).toBe(5)
+          expect(body.user.profile_info).toBe(null)
         });
     });
-    test("409: should give correct error if email already in use", () => {
+    test("409: should give correct error if username already in use", () => {
       const newUser = {
         username: "madhatter",
         email: "testuser@email.com",
@@ -60,7 +62,7 @@ describe("authentication", () => {
         .send(newUser)
         .expect(409)
         .then(({ body }) => {
-          expect(body.msg).toBe("Already Exists");
+          expect(body.msg).toBe("Username Already Exists");
         });
     });
     test("400: should give correct error if email invalid", () => {
@@ -101,6 +103,9 @@ describe("authentication", () => {
         .then(({ body }) => {
           expect(body).toHaveProperty("token");
           expect(body.user.username).toBe(login.username);
+          expect(body.user.email).toBe("madhatter@recipes.com");
+          expect(body.user.id).toBe(1)
+          expect(body.user.profile_info).toBe("I am new to cooking and here to teach myself a new skill")
         });
     });
     test("400: should give correct error when given an invalid username", () => {
@@ -222,6 +227,7 @@ describe("authentication", () => {
           expect(profile.username).toBe(login.username);
           expect(profile.email).toBe("hello@world.com");
           expect(profile.profile_info).toBe("Professional Chef");
+          expect(profile.id).toBe(3)
         });
     });
     test("200: responds with updated profile_info", () => {
@@ -234,6 +240,7 @@ describe("authentication", () => {
           expect(profile.username).toBe(login.username);
           expect(profile.email).toBe("hello@world.com");
           expect(profile.profile_info).toBe("Retired Chef");
+          expect(profile.id).toBe(3)
         });
     });
     test("200: hashes and updates password and send response", () => {

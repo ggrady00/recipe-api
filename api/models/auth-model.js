@@ -25,7 +25,7 @@ exports.registerUser = (username, email, password) => {
     .then((hashedPassword) => {
       const queryStr = `INSERT INTO users (username, email, password)
                           VALUES ($1, $2, $3)
-                          RETURNING id, username, email;`;
+                          RETURNING id, username, email, profile_info;`;
       return db.query(queryStr, [username, email, hashedPassword]);
     })
     .then(({ rows }) => {
@@ -48,7 +48,7 @@ exports.logInUser = (username, password) => {
 }
 
 exports.selectProfile = (id) => {
-  const queryStr =  `SELECT username, email, profile_info FROM users WHERE id = $1;`
+  const queryStr =  `SELECT id, username, email, profile_info FROM users WHERE id = $1;`
   return db.query(queryStr, [id])
   .then(({rows}) => {
     return rows[0]
@@ -70,7 +70,7 @@ exports.updateProfile = async (id, profile_info, password) => {
     queryValues.push(hashedPassword)
   }
 
-  queryStr += ` WHERE id = %L RETURNING username, email, profile_info;`
+  queryStr += ` WHERE id = %L RETURNING id, username, email, profile_info;`
   queryValues.push(id)
 
   const finalQueryStr = format(queryStr, ...queryValues)

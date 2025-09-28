@@ -25,7 +25,7 @@ exports.postLoginIn = (req, res, next) => {
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
-      res.status(200).send({ token: token, user: {username: user.username, email: user.email} });
+      res.status(200).send({ token: token, user: {username: user.username, email: user.email, id: user.id, profile_info: user.profile_info} });
     })
     .catch(next);
 };
