@@ -1,4 +1,4 @@
-const { selectRatingsByID, insertRatingByID, removeRatingByID } = require("../models/ratings-models")
+const { selectRatingsByID, insertRatingByID, removeRatingByID, updateRatingByID } = require("../models/ratings-models")
 const { checkExists, selectRecipeByID, selectAllRecipes } = require("../models/recipes-models")
 const { getRecipes } = require("./recipes-controllers")
 
@@ -74,4 +74,16 @@ exports.getRatings = (req, res, next) => {
     .then(ratings => {
         res.status(200).send({ratings})
     })
+}
+
+exports.patchRatingByID = (req, res, next) => {
+    const {id} = req.params
+    const {rating} = req.body
+    const user_id = req.user_id
+    updateRatingByID(id, user_id, rating)
+    .then((rating) => {
+        res.status(200).send({rating})
+    })
+    .catch(next)
+    
 }

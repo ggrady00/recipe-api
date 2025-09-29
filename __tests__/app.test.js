@@ -905,7 +905,7 @@ describe("endpoints", () => {
           expect(body.msg).toBe("Bad Request");
         });
     });
-    test("400: returns error when missing token", () => {
+    test("401: returns error when missing token", () => {
       return request(app)
         .patch("/api/recipes/1")
         .send({ tags: [1, 2, 3] })
@@ -1484,6 +1484,90 @@ describe("endpoints", () => {
           expect(recipe).toHaveProperty("average");
         });
       })
+    })
+  })
+  describe("PATCH /ratings/id", ()=>{
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("200: updates rating by id from logged in user", ()=>{
+      const requestBody = { rating: 2 };
+      const time = new Date().toISOString().substring(0, 16);
+      return request(app)
+      .patch("/api/ratings/3")
+      .send(requestBody)
+      .set("x-auth-token", token)
+      .expect(200)
+      .then(({body: {rating}})=>{
+        expect(rating.recipe_id).toBe(3);
+        expect(rating.user_id).toBe(1);
+        expect(rating.rating).toBe(2);
+        expect(rating.created_at.substring(0, 16)).toBe(time);
+        expect(rating.id).toBe(4)
+      })
+      .then(() => {
+        return request(app).get("/api/ratings/3").expect(200);
+      })
+      .then(({ body }) => {
+        expect(body.ratings.length).toBe(2);
+        expect(body.average).toBe(3);
+      });
+    })
+    test("400: returns error when empty request body", () => {
+      return request(app)
+      .patch("/api/recipes/3")
+      .set("x-auth-token", token)
+      .send()
+      .expect(400)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Bad Request");
+        });
+    })
+    test("400: returns error when invalid patch request",()=>{
+      return request(app)
+        .patch("/api/ratings/3")
+        .set("x-auth-token", token)
+        .send("2")
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    })
+    test("401: returns error when missing token", ()=>{
+      return request(app)
+        .patch("/api/ratings/3")
+        .send({rating: 2})
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    })
+    test("404: returns error when attempting to patch non existant rating id", ()=>{
+      return request(app)
+        .patch("/api/ratings/2")
+        .set("x-auth-token", token)
+        .send({ rating: 2})
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Not Found");
+        });
+    })
+    test("404: returns error when attempting to patch invalid rating id", ()=>{
+      return request(app)
+        .patch("/api/ratings/banaba")
+        .set("x-auth-token", token)
+        .send({ rating: 2})
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
     })
   })
 });
