@@ -1,7 +1,9 @@
 const db = require("../../db/connection")
 
 exports.selectCommentsByID = (id) => {
-    const queryStr = `SELECT * FROM comments
+    const queryStr = `SELECT comments.*, users.username FROM comments
+                      LEFT JOIN users
+                      ON comments.user_id = users.id
                       WHERE recipe_id = $1;`
 
     return db.query(queryStr, [id])

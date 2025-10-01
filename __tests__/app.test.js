@@ -1299,7 +1299,7 @@ describe("endpoints", () => {
         });
     });
   });
-  describe("GET comments/id", () => {
+  describe.only("GET comments/id", () => {
     test("200: returns an array of all comments by recipe_id", () => {
       return request(app)
         .get("/api/comments/3")
