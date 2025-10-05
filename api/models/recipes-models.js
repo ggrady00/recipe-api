@@ -233,6 +233,9 @@ exports.removeRecipeByID = (recipe_id) => {
     return db.query(`DELETE FROM ratings WHERE recipe_id = $1`, [recipe_id])
   })
   .then(()=>{
+    return db.query(`DELETE FROM saved_recipes WHERE recipe_id = $1`, [recipe_id])
+  })
+  .then(()=>{
     return db.query(`DELETE FROM recipes WHERE id = $1`, [recipe_id])
   })
 }

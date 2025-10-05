@@ -12,6 +12,7 @@ const {
   ratingsData,
   recipeTagsData,
   recipeIngredientsData,
+  savedRecipesData,
 } = require("../db/data/test-data/index");
 const ratings = require("../db/data/test-data/ratings");
 
@@ -25,6 +26,7 @@ beforeEach(() => {
     ratingsData,
     recipeTagsData,
     recipeIngredientsData,
+    savedRecipesData,
   });
 });
 afterAll(() => {
@@ -1299,7 +1301,7 @@ describe("endpoints", () => {
         });
     });
   });
-  describe.only("GET comments/id", () => {
+  describe("GET comments/id", () => {
     test("200: returns an array of all comments by recipe_id", () => {
       return request(app)
         .get("/api/comments/3")
@@ -1443,7 +1445,7 @@ describe("endpoints", () => {
         expect(body.msg).toBe("Comment not Found")
       })
     })
-    test("404: returns error when using invalid id", ()=>{
+    test("400: returns error when using invalid id", ()=>{
       return request(app)
       .delete("/api/comments/banana")
       .set("x-auth-token", token)
@@ -1569,5 +1571,225 @@ describe("endpoints", () => {
           expect(body.msg).toBe("Bad Request");
         });
     })
+  })
+  describe("GET /saved-recipes/", ()=>{
+    const login = { username: "harry89", password: "jsdf347!9Jsdsa378" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("200: returns list of all saved recipes by user id", ()=>{
+      return request(app)
+        .get("/api/saved-recipes")
+        .set("x-auth-token", token)
+        .expect(200)
+        .then(({body}) => {
+          expect(body.savedRecipes.length).toBe(3)
+          expect(body.savedRecipes[0].recipe_id).toBe(1)
+          body.savedRecipes.forEach(recipe => {
+            expect(recipe.user_id).toBe(4)
+            expect(recipe).toHaveProperty("recipe_id")
+            expect(recipe).toHaveProperty("created_at")
+          })
+        })
+    })
+    test("200: returns empty array when user has no saved recipe", ()=>{
+      let emptyToken;
+      return request(app)
+        .post("/api/auth/login")
+        .send({username: "campus", password: "password"})
+        .then(({body}) => {
+          emptyToken = body.token
+        })
+        .then(()=>{
+          return request(app)
+          .get("/api/saved-recipes")
+          .set("x-auth-token", emptyToken)
+          .expect(200)
+        })
+        .then(({body}) => {
+          expect(body.savedRecipes).toEqual([])
+        })
+    })
+    test("401: returns error when missing token", () => {
+      return request(app)
+        .get("/api/saved-recipes")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+    test("401: returns error when invalid token", () => {
+      return request(app)
+        .get("/api/saved-recipes")
+        .set("x-auth-token", "invalid")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
+  })
+  describe("POST /saved-recipes/", ()=>{
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("201: returns savedRecipe and adds to db", ()=>{
+      const time = new Date().toISOString().substring(0, 16);
+      const requestBody = { recipe_id: 5 };
+      return request(app)
+        .post("/api/saved-recipes")
+        .send(requestBody)
+        .set("x-auth-token", token)
+        .expect(201)
+        .then(({ body: { savedRecipe } }) => {
+          expect(savedRecipe.recipe_id).toBe(5);
+          expect(savedRecipe.user_id).toBe(1);
+          expect(savedRecipe.created_at.substring(0, 16)).toBe(time);
+        })
+    })
+    test("400: returns error when missing recipe_id in body", ()=>{
+      return request(app)
+        .post("/api/saved-recipes")
+        .set("x-auth-token", token)
+        .send({comment: "hello"})
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    })
+    test("404: returns error when invalid body", ()=>{
+      return request(app)
+        .post("/api/saved-recipes")
+        .set("x-auth-token", token)
+        .send({recipe_id : 99})
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Recipe not Found");
+        });
+    })
+    test("404: returns error when invalid recipe id data type", ()=>{
+      return request(app)
+        .post("/api/saved-recipes")
+        .set("x-auth-token", token)
+        .send({recipe_id : "hello"})
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    })
+    test("401: returns error when missing token", () => {
+      return request(app)
+        .post("/api/saved-recipes")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+    test("401: returns error when invalid token", () => {
+      return request(app)
+        .post("/api/saved-recipes")
+        .set("x-auth-token", "invalid")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
+    test("409: returns error when user tries to save same recipe more than once", () => {
+      const requestBody = { recipe_id: 3 };
+      return request(app)
+      .post("/api/saved-recipes")
+        .send(requestBody)
+        .set("x-auth-token", token)
+        .expect(409)
+        .then(({body}) => {
+          expect(body.msg).toBe("Already Exists")
+        })
+    })
+  })
+  describe("DELETE /save-recipes", ()=>{
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("204: deletes recipe from saved recipes", () => {
+      const requestBody = { recipe_id: 3 };
+      return request(app)
+      .delete("/api/saved-recipes")
+      .send(requestBody)
+      .set("x-auth-token", token)
+      .expect(204)
+      .then(() => {
+        return request(app).get("/api/saved-recipes")
+        .set("x-auth-token", token)
+        .expect(200)
+      })
+      .then(({body}) => {
+        expect(body.savedRecipes.length).toBe(1)
+      })
+    })
+    test("400: returns error when recipe_id in body is invalid data type", ()=>{
+      return request(app)
+        .delete("/api/saved-recipes")
+        .set("x-auth-token", token)
+        .send({recipe_id: "hello"})
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Bad Request");
+        });
+    })
+    test("404: returns error when missing body", ()=>{
+      return request(app)
+        .delete("/api/saved-recipes")
+        .set("x-auth-token", token)
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Saved Recipe not Found");
+        });
+    })
+    test("404: returns error when attempting to delete an unsaved recipe", ()=>{
+      return request(app)
+        .delete("/api/saved-recipes")
+        .set("x-auth-token", token)
+        .send({recipe_id : 1})
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Saved Recipe not Found");
+        });
+    })
+    test("401: returns error when missing token", () => {
+      return request(app)
+        .delete("/api/saved-recipes")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+    test("401: returns error when invalid token", () => {
+      return request(app)
+        .delete("/api/saved-recipes")
+        .set("x-auth-token", "invalid")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
   })
 });

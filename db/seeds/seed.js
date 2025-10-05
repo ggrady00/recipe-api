@@ -3,10 +3,14 @@ const format = require('pg-format');
 const bcrypt = require("bcryptjs");
 const hashPasswords = require("./utils");
 
-const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, ratingsData, recipeTagsData, recipeIngredientsData}) => {
+
+const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, ratingsData, savedRecipesData ,recipeTagsData, recipeIngredientsData}) => {
     return db.query('DROP TABLE IF EXISTS recipe_ingredients;')
     .then(()=>{
         return db.query('DROP TABLE IF EXISTS recipe_tags;')
+    })
+    .then(()=>{
+        return db.query('DROP TABLE IF EXISTS saved_recipes;')
     })
     .then(()=>{
         return db.query('DROP TABLE IF EXISTS ratings;')
@@ -76,10 +80,20 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         return db.query(`
         CREATE TABLE ratings (
             id SERIAL PRIMARY KEY,
-            recipe_id INT REFERENCES recipes(id),
             user_id INT REFERENCES users(id),
+            recipe_id INT REFERENCES recipes(id),
             rating INT NOT NULL,
             created_at TIMESTAMP DEFAULT NOW()
+        );`)
+    })
+    .then(()=>{
+        return db.query(`
+        CREATE TABLE saved_recipes (
+            id SERIAL PRIMARY KEY,
+            user_id INT NOT NULL REFERENCES users(id),
+            recipe_id INT NOT NULL REFERENCES recipes(id),
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (user_id, recipe_id)
         );`)
     })
     .then(()=>{
@@ -144,6 +158,13 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         )
         const ratingsPromise = db.query(insertRatingsQueryStr)
 
+        const insertSavedRecipesQueryStr = format(
+            `INSERT INTO saved_recipes (recipe_id, user_id) VALUES %L;`,
+            savedRecipesData.map(({recipe_id, user_id}) => [recipe_id, user_id])
+        )
+        const savedRecipesPromise = db.query(insertSavedRecipesQueryStr)
+
+
         const insertRecipeIngredientsQueryStr = format(
             `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES %L;`,
             recipeIngredientsData.map(({recipe_id, ingredient_id, quantity}) => [recipe_id, ingredient_id, quantity])
@@ -157,7 +178,7 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         )
         const recipeTagsPromise = db.query(insertRecipeTagsQueryStr)
 
-        return Promise.all([commentsPromise, ratingsPromise, recipeIngredientsPromise, recipeTagsPromise])
+        return Promise.all([commentsPromise, ratingsPromise, savedRecipesPromise ,recipeIngredientsPromise, recipeTagsPromise])
     })
 }
 
