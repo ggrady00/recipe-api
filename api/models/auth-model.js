@@ -55,25 +55,33 @@ exports.selectProfile = (id) => {
   })
 }
 
-exports.updateProfile = async (id, profile_info, password) => {
-  if (!profile_info && !password) return Promise.reject({status:400, msg: "Bad Request"})
+exports.updateProfile = async (id, username, profile_info, password) => {
+  console.log(username)
+  if (!profile_info && !password && !username) return Promise.reject({status:400, msg: "Bad Request"})
   if (profile_info && password) return Promise.reject({status:400, msg: "Bad Request"})
   let queryStr = `UPDATE users`
   const queryValues = []
+  const setValues = []
+  if(username) {
+    setValues.push(`username = %L`)
+    queryValues.push(username)
+  }
   if(profile_info) {
-    queryStr += ` SET profile_info = %L`
+    setValues.push(`profile_info = %L`)
     queryValues.push(profile_info)
   }
   if(password) {
     const hashedPassword = await hashPassword(password)
-    queryStr += ` SET password = %L`
+    setValues.push(`password = %L`)
     queryValues.push(hashedPassword)
   }
 
+  queryStr += ` SET ${setValues.join(", ")}`
   queryStr += ` WHERE id = %L RETURNING id, username, email, profile_info;`
   queryValues.push(id)
 
   const finalQueryStr = format(queryStr, ...queryValues)
+
   
   return db.query(finalQueryStr)
   .then(({rows})=>{

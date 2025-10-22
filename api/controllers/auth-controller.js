@@ -40,9 +40,9 @@ exports.getProfile = (req, res, next) => {
 };
 
 exports.patchProfile = (req, res, next) => {
-  const { profile_info, password } = req.body;
+  const { username, profile_info, password } = req.body;
   const user_id = req.user_id;
-  updateProfile(user_id, profile_info, password)
+  updateProfile(user_id, username, profile_info, password)
     .then((profile) => {
       if (password) {
         res.status(200).send({msg: 'Your Password has been Updated'});

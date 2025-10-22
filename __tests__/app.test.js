@@ -209,7 +209,7 @@ describe("authentication", () => {
       });
     });
   });
-  describe("GET/PATCH /profile", () => {
+  describe.only("GET/PATCH /profile", () => {
     const login = { username: "new_user", password: "HeLoWrld123" };
     let token;
     beforeEach(() => {
@@ -243,6 +243,43 @@ describe("authentication", () => {
           expect(profile.email).toBe("hello@world.com");
           expect(profile.profile_info).toBe("Retired Chef");
           expect(profile.id).toBe(3)
+        });
+    });
+
+    test("200: responds with updated username", () => {
+      return request(app)
+        .patch("/api/auth/profile")
+        .set("x-auth-token", token)
+        .send({ username: "RetiredChef" })
+        .expect(200)
+        .then(({ body: { profile } }) => {
+          expect(profile.email).toBe("hello@world.com");
+          expect(profile.username).toBe("RetiredChef");
+          expect(profile.id).toBe(3)
+        });
+    });
+    test("200: responds with updated username and profile_info", () => {
+      return request(app)
+        .patch("/api/auth/profile")
+        .set("x-auth-token", token)
+        .send({ username: "RetiredChef", profile_info : "Retired Chef" })
+        .expect(200)
+        .then(({ body: { profile } }) => {
+          expect(profile.email).toBe("hello@world.com");
+          expect(profile.username).toBe("RetiredChef");
+          expect(profile.profile_info).toBe("Retired Chef");
+          expect(profile.id).toBe(3)
+        });
+    });
+    test("409: responds with error when patch a username that is taken", () => {
+      return request(app)
+        .patch("/api/auth/profile")
+        .set("x-auth-token", token)
+        .send({ username: "campus" })
+        .expect(409)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Username Already Exists");
+          
         });
     });
     test("200: hashes and updates password and send response", () => {
