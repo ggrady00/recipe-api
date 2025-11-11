@@ -209,7 +209,7 @@ describe("authentication", () => {
       });
     });
   });
-  describe.only("GET/PATCH /profile", () => {
+  describe("GET/PATCH /profile", () => {
     const login = { username: "new_user", password: "HeLoWrld123" };
     let token;
     beforeEach(() => {
@@ -1828,5 +1828,21 @@ describe("endpoints", () => {
           expect(body.msg).toBe("Invalid Token");
         });
     });
+  })
+  describe("GET comments", ()=>{
+    test("200: returns array of all recipes with all comments", ()=>{
+      return request(app)
+      .get("/api/comments")
+      .expect(200)
+      .then(({body}) =>{
+        expect(body.comments.length).toBe(4)
+        expect(body.comments[2].comments.length).toBe(2)
+        expect(body.comments[2].id).toBe(3)
+        body.comments.forEach((recipe) => {
+          expect(recipe).toHaveProperty("id");
+          expect(recipe).toHaveProperty("comments");
+        });
+      })
+    })
   })
 });

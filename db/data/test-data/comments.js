@@ -27,11 +27,13 @@ module.exports = [
         recipe_id: 3,  
         user_id: 1,    
         body: 'A great way to use up leftover veggies, super versatile.',
+        created_at: '2025-07-03T13:45:00'
     },
     {
         recipe_id: 4,  
         user_id: 2,   
         body: 'Next time, I’ll add some guacamole on top.',
+        created_at: '2025-07-03T16:45:00'
     }
 ];
 

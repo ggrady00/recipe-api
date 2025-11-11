@@ -56,7 +56,6 @@ exports.selectProfile = (id) => {
 }
 
 exports.updateProfile = async (id, username, profile_info, password) => {
-  console.log(username)
   if (!profile_info && !password && !username) return Promise.reject({status:400, msg: "Bad Request"})
   if (profile_info && password) return Promise.reject({status:400, msg: "Bad Request"})
   let queryStr = `UPDATE users`

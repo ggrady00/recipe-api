@@ -67,13 +67,13 @@ exports.getRatings = (req, res, next) => {
                 id: id
             };
         });
-        
         const filtered = ratings.filter(recipe => recipe.id)
         return filtered
     })
     .then(ratings => {
         res.status(200).send({ratings})
     })
+    .catch(next)
 }
 
 exports.patchRatingByID = (req, res, next) => {
