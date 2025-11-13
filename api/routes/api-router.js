@@ -5,6 +5,7 @@ const ingredientRouter = require("./ingredients-router")
 const ratingsRouter = require("./ratings-router")
 const recipeRouter = require("./recipes-router")
 const savedRecipesRouter = require("./saved-recipes-router")
+const shoppingListRouter = require("./shopping-list-router")
 const tagsRouter = require("./tags-router")
 
 apiRouter.use("/auth", authRouter)
@@ -14,5 +15,7 @@ apiRouter.use("/tags", tagsRouter)
 apiRouter.use("/ratings", ratingsRouter)
 apiRouter.use("/comments", commentsRouter)
 apiRouter.use("/saved-recipes", savedRecipesRouter)
+apiRouter.use("/shopping-list", shoppingListRouter)
+
 
 module.exports = apiRouter

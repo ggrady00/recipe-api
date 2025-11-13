@@ -13,6 +13,7 @@ const {
   recipeTagsData,
   recipeIngredientsData,
   savedRecipesData,
+  shoppingListData,
 } = require("../db/data/test-data/index");
 const ratings = require("../db/data/test-data/ratings");
 
@@ -27,6 +28,7 @@ beforeEach(() => {
     recipeTagsData,
     recipeIngredientsData,
     savedRecipesData,
+    shoppingListData,
   });
 });
 afterAll(() => {
@@ -741,6 +743,22 @@ describe("endpoints", () => {
         .expect(400)
         .then(({ body }) => {
           expect(body.msg).toBe("Bad Request");
+        });
+    });
+    test("404: responds with error when invalid ingredient id", () => {
+      const requestBody = {
+        name: "test",
+        instructions: "1. sdf 2. sfd",
+        ingredients: [{ id: 99, quantity: "50g" }],
+      };
+
+      return request(app)
+        .post("/api/recipes")
+        .set("x-auth-token", token)
+        .send(requestBody)
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Ingredient not Found");
         });
     });
     test("400: responds with error when tags contain invalid data types", () => {
@@ -1844,5 +1862,199 @@ describe("endpoints", () => {
         });
       })
     })
+  })
+  describe("GET /shopping-list", () => {
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("200: returns shopping list by user id", () =>{
+      const time = new Date().toISOString().substring(0, 16);
+      return request(app)
+      .get("/api/shopping-list")
+      .set("x-auth-token", token)
+      .expect(200)
+      .then(({body: {shoppingList}}) => {
+        expect(shoppingList.length).toBe(6)
+        expect(shoppingList).toEqual([
+          { id: 1, user_id: 1, ingredient: "Chicken", quantity: "300g", added_at: expect.any(String) },
+          { id: 2, user_id: 1, ingredient: "Curry Powder", quantity: "2 tbsp", added_at: expect.any(String) },
+          { id: 3, user_id: 1, ingredient: "Onion", quantity: "1 medium", added_at: expect.any(String) },
+          { id: 4, user_id: 1, ingredient: "Garlic", quantity: "3 cloves", added_at: expect.any(String) },
+          { id: 5, user_id: 1, ingredient: "Tomatoes", quantity: "2 large", added_at: expect.any(String) },
+          { id: 6, user_id: 1, ingredient: "Coconut Milk", quantity: "400ml", added_at: expect.any(String) },
+        ])
+      })
+    })
+    test("200: returns empty array when", ()=>{
+      let emptyToken;
+      return request(app)
+        .post("/api/auth/login")
+        .send({username: "campus", password: "password"})
+        .then(({body}) => {
+          emptyToken = body.token
+        })
+        .then(()=>{
+          return request(app)
+          .get("/api/shopping-list")
+          .set("x-auth-token", emptyToken)
+          .expect(200)
+        })
+        .then(({body}) => {
+          expect(body.shoppingList).toEqual([])
+        })
+    })
+    test("401: returns error when missing token", () => {
+      return request(app)
+        .get("/api/shopping-list")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+    test("401: returns error when invalid token", () => {
+      return request(app)
+        .get("/api/shopping-list")
+        .set("x-auth-token", "invalid")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
+  })
+  describe("POST /shopping-list", () => {
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("201: returns and adds an ingredient to shopping list", ()=>{
+      const newIngs = [{ingredient_id: 1, quantity: "200g"}]
+      const time = new Date().toISOString().substring(0, 16);
+      return request(app)
+      .post("/api/shopping-list")
+      .set("x-auth-token", token)
+      .send(newIngs)
+      .expect(201)
+      .then(({body : { shoppingListItems }}) => {
+        expect(shoppingListItems[0].id).toBe(7)
+        expect(shoppingListItems[0].user_id).toBe(1)
+        expect(shoppingListItems[0].ingredient_id).toBe(1)
+        expect(shoppingListItems[0].quantity).toBe("200g")
+        expect(shoppingListItems[0].added_at.substring(0, 16)).toBe(time)
+      })
+    })
+    test("201: returns and adds multiple ingredients to shopping list", ()=>{
+      const newIngs = [
+        {ingredient_id: 1, quantity: "200g"},
+        {ingredient_id: 2, quantity: "50g"}
+      ]
+      return request(app)
+      .post("/api/shopping-list")
+      .set("x-auth-token", token)
+      .send(newIngs)
+      .expect(201)
+      .then(({body : { shoppingListItems }}) => {
+        shoppingListItems.forEach(item => {
+        expect(item).toHaveProperty("id")
+        expect(item.user_id).toBe(1)
+        expect(item).toHaveProperty("ingredient_id")
+        expect(item).toHaveProperty("quantity")
+        expect(item).toHaveProperty("added_at")
+        })
+      })
+    })
+    test("400: returns error when missing body elements", ()=>{
+      const newIngs = [
+        {ingredient_id: 1},
+        {quantity: "50g"}
+      ]
+      return request(app)
+      .post("/api/shopping-list")
+      .set("x-auth-token", token)
+      .send(newIngs)
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("400: returns error when empty body", ()=>{
+      return request(app)
+      .post("/api/shopping-list")
+      .set("x-auth-token", token)
+      .send([])
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("404: returns error when invalid body elements", ()=>{
+      const newIngs = [
+        {ingredient_id: 99, quantity:"50g"}
+      ]
+      return request(app)
+      .post("/api/shopping-list")
+      .set("x-auth-token", token)
+      .send(newIngs)
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Ingredient not Found")
+      })
+    })
+    test("400: returns error when quantity empty", ()=>{
+      const newIngs = [
+        {ingredient_id: 1, quantity:""}
+      ]
+      return request(app)
+      .post("/api/shopping-list")
+      .set("x-auth-token", token)
+      .send(newIngs)
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("400: returns error when mix of invalid and valid body", ()=>{
+      const newIngs = [
+        { ingredient_id: 1, quantity: "100g" },
+        { ingredient_id: 999, quantity: "50g" }
+      ]
+      return request(app)
+      .post("/api/shopping-list")
+      .set("x-auth-token", token)
+      .send(newIngs)
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Ingredient not Found")
+      })
+    })
+    test("401: returns error when missing token", () => {
+      return request(app)
+        .get("/api/shopping-list")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+    test("401: returns error when invalid token", () => {
+      return request(app)
+        .get("/api/shopping-list")
+        .set("x-auth-token", "invalid")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
   })
 });

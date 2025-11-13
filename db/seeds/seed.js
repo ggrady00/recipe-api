@@ -4,10 +4,13 @@ const bcrypt = require("bcryptjs");
 const hashPasswords = require("./utils");
 
 
-const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, ratingsData, savedRecipesData ,recipeTagsData, recipeIngredientsData}) => {
+const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, ratingsData, savedRecipesData ,recipeTagsData, recipeIngredientsData, shoppingListData}) => {
     return db.query('DROP TABLE IF EXISTS recipe_ingredients;')
     .then(()=>{
         return db.query('DROP TABLE IF EXISTS recipe_tags;')
+    })
+    .then(()=>{
+        return db.query('DROP TABLE IF EXISTS shopping_list;')
     })
     .then(()=>{
         return db.query('DROP TABLE IF EXISTS saved_recipes;')
@@ -105,6 +108,16 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
             quantity VARCHAR(50)
         );`)
     })
+    .then(()=>{
+        return db.query(`
+        CREATE TABLE shopping_list (
+            id SERIAL PRIMARY KEY,
+            user_id INT NOT NULL REFERENCES users(id),
+            ingredient_id INT NOT NULL REFERENCES ingredients(id),
+            quantity VARCHAR(50) NOT NULL,
+            added_at TIMESTAMP DEFAULT NOW()
+        );`)
+    })
     
     .then(()=>{
         return db.query(`
@@ -164,6 +177,11 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         )
         const savedRecipesPromise = db.query(insertSavedRecipesQueryStr)
 
+        const insertShoppingListQueryStr = format(
+            `INSERT INTO shopping_list (user_id, ingredient_id, quantity) VALUES %L;`,
+            shoppingListData.map(({user_id, ingredient_id, quantity}) => [user_id, ingredient_id, quantity])
+        )
+        const shoppingListPromise = db.query(insertShoppingListQueryStr)
 
         const insertRecipeIngredientsQueryStr = format(
             `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES %L;`,
@@ -178,7 +196,7 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
         )
         const recipeTagsPromise = db.query(insertRecipeTagsQueryStr)
 
-        return Promise.all([commentsPromise, ratingsPromise, savedRecipesPromise ,recipeIngredientsPromise, recipeTagsPromise])
+        return Promise.all([commentsPromise, ratingsPromise, savedRecipesPromise ,recipeIngredientsPromise, recipeTagsPromise, shoppingListPromise])
     })
 }
 

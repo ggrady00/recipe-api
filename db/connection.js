@@ -13,7 +13,7 @@ if (ENV === 'production') {
     config.ssl = {rejectUnauthorized: false};
     config.family = 4;
 }
-console.log(config)
+// console.log(config)
 
 if (!process.env.PGDATABASE && !process.env.DATABASE_URL) {
     throw new Error('PGDATABASE or DATABASE_URL not set')
