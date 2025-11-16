@@ -34,5 +34,11 @@ module.exports = [
         ingredient_id: 10,
         quantity: "400ml"
     
+    },
+    {
+        user_id: 2,
+        ingredient_id: 10,
+        quantity: "400ml"
+    
     }
 ]

@@ -1896,7 +1896,7 @@ describe("endpoints", () => {
       let emptyToken;
       return request(app)
         .post("/api/auth/login")
-        .send({username: "campus", password: "password"})
+        .send({username: "harry89", password: "jsdf347!9Jsdsa378"})
         .then(({body}) => {
           emptyToken = body.token
         })
@@ -1948,7 +1948,7 @@ describe("endpoints", () => {
       .send(newIngs)
       .expect(201)
       .then(({body : { shoppingListItems }}) => {
-        expect(shoppingListItems[0].id).toBe(7)
+        expect(shoppingListItems[0].id).toBe(8)
         expect(shoppingListItems[0].user_id).toBe(1)
         expect(shoppingListItems[0].ingredient_id).toBe(1)
         expect(shoppingListItems[0].quantity).toBe("200g")
@@ -2056,5 +2056,181 @@ describe("endpoints", () => {
           expect(body.msg).toBe("Invalid Token");
         });
     });
+  })
+  describe("PATCH /shopping-list", () => {
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("200: updates shopping-list by id from logged in user", ()=>{
+      const newQunatity = {quantity: "500g"}
+      return request(app)
+      .patch("/api/shopping-list/1")
+      .set("x-auth-token", token)
+      .send(newQunatity)
+      .expect(200)
+      .then(({body : { shoppingListItem }}) => {
+        expect(shoppingListItem.id).toBe(1)
+        expect(shoppingListItem.user_id).toBe(1)
+        expect(shoppingListItem.ingredient_id).toBe(5)
+        expect(shoppingListItem.quantity).toBe("500g")
+      })
+    })
+    test("400: returns error when empty request body", ()=>{
+      return request(app)
+      .patch("/api/shopping-list/1")
+      .set("x-auth-token", token)
+      .send({})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("400: returns error when invalid request body", ()=>{
+      return request(app)
+      .patch("/api/shopping-list/1")
+      .set("x-auth-token", token)
+      .send({quantity: [200]})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("400: returns error when invalid :id", ()=>{
+      return request(app)
+      .patch("/api/shopping-list/bananas")
+      .set("x-auth-token", token)
+      .send({quantity: "500g"})
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("404: returns error when non-existant :id", ()=>{
+      return request(app)
+      .patch("/api/shopping-list/999")
+      .set("x-auth-token", token)
+      .send({quantity: "500g"})
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Item not Found")
+      })
+    })
+    test("401: returns error when missing token", () => {
+      return request(app)
+        .patch("/api/shopping-list/1")
+        .send({quantity: "500g"})
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+    test("401: returns error when invalid token", () => {
+      return request(app)
+        .patch("/api/shopping-list/1")
+        .set("x-auth-token", "invalid")
+        .send({quantity: "500g"})
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
+    test("403: returns error when valid token but restricted access", ()=>{
+      return request(app)
+      .patch("/api/shopping-list/7")
+      .set("x-auth-token", token)
+      .send({quantity: "100g"})
+      .expect(403)
+      .then(({body}) => {
+        expect(body.msg).toBe("You cannot update this shopping list item")
+      })
+    })
+    
+    
+  })
+  describe("DELETE /shopping-list", () => {
+    const login = { username: "madhatter", password: "unsafepw" };
+    let token;
+    beforeAll(() => {
+      return request(app)
+        .post("/api/auth/login")
+        .send(login)
+        .then(({ body }) => {
+          token = body.token;
+        });
+    });
+    test("204: deletes shopping-list by id from logged in user", ()=>{
+      return request(app)
+      .delete("/api/shopping-list/1")
+      .set("x-auth-token", token)
+      .expect(204)
+      .then(() => {
+        return request(app)
+        .get("/api/shopping-list")
+        .set("x-auth-token", token)
+        .expect(200)
+      })
+      .then(({body : {shoppingList}}) => {
+        expect(shoppingList.length).toBe(5)
+        shoppingList.forEach(item => {
+          expect(item.id).not.toBe(1)
+        })
+      })
+    })
+
+
+    
+    test("400: returns error when invalid :id", ()=>{
+      return request(app)
+      .delete("/api/shopping-list/bananas")
+      .set("x-auth-token", token)
+      .expect(400)
+      .then(({body}) => {
+        expect(body.msg).toBe("Bad Request")
+      })
+    })
+    test("404: returns error when non-existant :id", ()=>{
+      return request(app)
+      .delete("/api/shopping-list/999")
+      .set("x-auth-token", token)
+      .expect(404)
+      .then(({body}) => {
+        expect(body.msg).toBe("Item not Found")
+      })
+    })
+    test("401: returns error when missing token", () => {
+      return request(app)
+        .delete("/api/shopping-list/1")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Missing Token");
+        });
+    });
+    test("401: returns error when invalid token", () => {
+      return request(app)
+        .delete("/api/shopping-list/1")
+        .set("x-auth-token", "invalid")
+        .expect(401)
+        .then(({ body }) => {
+          expect(body.msg).toBe("Invalid Token");
+        });
+    });
+    test("403: returns error when valid token but restricted access", ()=>{
+      return request(app)
+      .delete("/api/shopping-list/7")
+      .set("x-auth-token", token)
+      .expect(403)
+      .then(({body}) => {
+        expect(body.msg).toBe("You cannot delete this shopping list item")
+      })
+    })
+    
+    
   })
 });

@@ -1,4 +1,4 @@
-const { selectShoppingList, insertShoppingList } = require("../models/shopping-list-models")
+const { selectShoppingList, insertShoppingList, updateShoppingListById, removeShoppingListItemById } = require("../models/shopping-list-models")
 
 exports.getShoppingList = (req, res, next) => {
     const user_id = req.user_id
@@ -17,6 +17,30 @@ exports.postShoppingList = (req, res, next) => {
     insertShoppingList(user_id, req.body)
     .then(shoppingListItems => {
         res.status(201).send(shoppingListItems)
+    })
+    .catch(next)
+}
+
+exports.patchShoppingListById = (req, res, next) => {
+    const user_id = req.user_id
+    const {id} = req.params
+    const {quantity} = req.body
+    if (!quantity || typeof quantity !== "string" || quantity === "") return res.status(400).send({msg: 'Bad Request'})
+
+
+    updateShoppingListById(id, quantity, user_id)
+    .then(shoppingListItem => {
+        res.status(200).send(shoppingListItem)
+    })
+    .catch(next)
+}
+
+exports.deleteShoppingListItemById = (req, res, next) => {
+    const user_id = req.user_id
+    const {id} = req.params
+    removeShoppingListItemById(user_id, id)
+    .then(shoppingListItem => {
+        res.status(204).send(shoppingListItem)
     })
     .catch(next)
 }
