@@ -48,15 +48,15 @@ exports.logInUser = (username, password) => {
 }
 
 exports.selectProfile = (id) => {
-  const queryStr =  `SELECT id, username, email, profile_info FROM users WHERE id = $1;`
+  const queryStr =  `SELECT id, username, email, profile_info, profile_pic FROM users WHERE id = $1;`
   return db.query(queryStr, [id])
   .then(({rows}) => {
     return rows[0]
   })
 }
 
-exports.updateProfile = async (id, username, profile_info, password) => {
-  if (!profile_info && !password && !username) return Promise.reject({status:400, msg: "Bad Request"})
+exports.updateProfile = async (id, username, profile_info, password, profile_pic) => {
+  if (!profile_info && !password && !username && !profile_pic) return Promise.reject({status:400, msg: "Bad Request"})
   if (profile_info && password) return Promise.reject({status:400, msg: "Bad Request"})
   let queryStr = `UPDATE users`
   const queryValues = []
@@ -74,13 +74,17 @@ exports.updateProfile = async (id, username, profile_info, password) => {
     setValues.push(`password = %L`)
     queryValues.push(hashedPassword)
   }
+  if(profile_pic){
+    setValues.push(`profile_pic = %L`)
+    queryValues.push(profile_pic)
+  }
 
   queryStr += ` SET ${setValues.join(", ")}`
-  queryStr += ` WHERE id = %L RETURNING id, username, email, profile_info;`
+  queryStr += ` WHERE id = %L RETURNING id, username, email, profile_info, profile_pic;`
   queryValues.push(id)
 
   const finalQueryStr = format(queryStr, ...queryValues)
-
+  
   
   return db.query(finalQueryStr)
   .then(({rows})=>{

@@ -139,9 +139,8 @@ exports.insertIngredient = (recipe_id, ing_id, quantity) => {
         ])
 }
 
-exports.insertRecipe = (body, user_id) => {
-  const ingredients = body.ingredients;
-  const tags = body.tags;
+exports.insertRecipe = (name, description, instructions, ingredients, tags, recipe_pic, user_id) => {
+  // console.log(recipe_pic)
 
   if (!ingredients) return Promise.reject({ status: 400, msg: "Bad Request" });
   for (let ingredient of ingredients) {
@@ -150,11 +149,11 @@ exports.insertRecipe = (body, user_id) => {
     }
   }
 
-  const queryStr = `INSERT INTO recipes (name, description, instructions, created_by)
-                      VALUES ($1, $2, $3, $4)
+  const queryStr = `INSERT INTO recipes (name, description, instructions, created_by, recipe_pic)
+                      VALUES ($1, $2, $3, $4, $5)
                       RETURNING id;`;
   return db
-    .query(queryStr, [body.name, body.description, body.instructions, user_id])
+    .query(queryStr, [name, description, instructions, user_id, recipe_pic])
     .then(({ rows }) => {
       id = rows[0].id;
       const promises = ingredients.map(ingredient => this.insertIngredient(id, ingredient.id, ingredient.quantity))

@@ -46,7 +46,8 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
             username VARCHAR(50) UNIQUE NOT NULL,
             email VARCHAR(30) UNIQUE NOT NULL,
             password VARCHAR(100) NOT NULL,
-            profile_info VARCHAR(100)
+            profile_info VARCHAR(100),
+            profile_pic TEXT
         );`)
         
 
@@ -66,7 +67,8 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
             instructions VARCHAR NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
             created_by INT references users(id),
-            updated_at TIMESTAMP
+            updated_at TIMESTAMP,
+            recipe_pic TEXT
         );`)
     })
     .then(()=>{
@@ -153,8 +155,8 @@ const seed = ({tagsData, recipesData, usersData, ingredientsData, commentsData, 
     })
     .then(()=>{
         const insertRecipesQueryStr = format(
-            `INSERT INTO recipes (name, description, instructions, created_by) VALUES %L;`,
-            recipesData.map(({name, description, instructions, created_by}) => [name, description, instructions, created_by])
+            `INSERT INTO recipes (name, description, instructions, created_by, recipe_pic) VALUES %L;`,
+            recipesData.map(({name, description, instructions, created_by, recipe_pic}) => [name, description, instructions, created_by, recipe_pic])
         )
         return db.query(insertRecipesQueryStr)
     })

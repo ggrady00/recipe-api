@@ -232,6 +232,7 @@ describe("authentication", () => {
           expect(profile.email).toBe("hello@world.com");
           expect(profile.profile_info).toBe("Professional Chef");
           expect(profile.id).toBe(3)
+          expect(profile).toHaveProperty("profile_pic")
         });
     });
     test("200: responds with updated profile_info", () => {
@@ -273,6 +274,18 @@ describe("authentication", () => {
           expect(profile.id).toBe(3)
         });
     });
+    test("200: updates profile pic", ()=>{
+      return request(app)
+      .patch("/api/auth/profile")
+      .set("x-auth-token", token)
+      .attach("profile_pic", "__tests__/download.jpeg")
+      .expect(200)
+      .then(({body: {profile}}) => {
+        expect(profile).toHaveProperty("profile_pic");
+        expect(typeof profile.profile_pic).toBe("string");
+        expect(profile.profile_pic).toMatch(/res\.cloudinary\.com/);
+      })
+    })
     test("409: responds with error when patch a username that is taken", () => {
       return request(app)
         .patch("/api/auth/profile")
@@ -382,6 +395,7 @@ describe("endpoints", () => {
             expect(Array.isArray(recipe.ingredients)).toBe(true);
             expect(recipe).toHaveProperty("tags");
             expect(Array.isArray(recipe.tags)).toBe(true);
+            expect(recipe).toHaveProperty("recipe_pic")
           });
         });
     });
@@ -669,6 +683,70 @@ describe("endpoints", () => {
           ]);
           expect(recipe.tags).toEqual(["Italian", "Pasta", "Quick"]);
           expect(recipe.created_by).toBe("madhatter");
+        });
+    });
+    test("201: posts and responds with new recipe when given a recipe_pic", () => {
+      const requestBody = {
+        name: "Pesto Pasta",
+        description: "Fresh and aromatic pasta with basil pesto",
+        instructions:
+          "1. Cook pasta. 2. Blend basil, garlic, pine nuts, and Parmesan cheese into pesto. 3. Mix with pasta and serve.",
+        ingredients: [
+          {
+            id: 18,
+            quantity: "200g",
+          },
+          {
+            id: 19,
+            quantity: "2 cups",
+          },
+          {
+            id: 8,
+            quantity: "2 cloves",
+          },
+          {
+            id: 20,
+            quantity: "1/4 cup",
+          },
+          {
+            id: 4,
+            quantity: "1/2 cup",
+          },
+          {
+            id: 21,
+            quantity: "1/4 cup",
+          },
+        ],
+        tags: [1, 2, 9],
+      };
+      return request(app)
+        .post("/api/recipes")
+        .set("x-auth-token", token)
+        .field("name", requestBody.name)
+        .field("description", requestBody.description)
+        .field("instructions", requestBody.instructions)
+        .field("ingredients", JSON.stringify(requestBody.ingredients))
+        .field("tags", JSON.stringify(requestBody.tags))
+        .attach("recipe_pic", "__tests__/download.jpeg")
+        .expect(201)
+        .then(({ body: { recipe } }) => {
+          expect(recipe).toHaveProperty("id");
+          expect(recipe.name).toBe(requestBody.name);
+          expect(recipe.description).toBe(requestBody.description);
+          expect(recipe.instructions).toBe(requestBody.instructions);
+          expect(recipe).toHaveProperty("created_at");
+          expect(recipe).toHaveProperty("updated_at");
+          expect(recipe.ingredients).toEqual([
+            { ingredient: "Parmesan Cheese", quantity: "1/2 cup" },
+            { ingredient: "Garlic", quantity: "2 cloves" },
+            { ingredient: "Pasta", quantity: "200g" },
+            { ingredient: "Basil", quantity: "2 cups" },
+            { ingredient: "Pine Nuts", quantity: "1/4 cup" },
+            { ingredient: "Olive Oil", quantity: "1/4 cup" },
+          ]);
+          expect(recipe.tags).toEqual(["Italian", "Pasta", "Quick"]);
+          expect(recipe.created_by).toBe("madhatter");
+          expect(recipe.recipe_pic).toMatch(/res\.cloudinary\.com/);
         });
     });
     test("400: responds with error when body missing elements", () => {
